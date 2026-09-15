@@ -1,0 +1,267 @@
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, BookOpen, Save, Calendar } from 'lucide-react';
+import { useAllDailyRecords, useActivities, useTasks, useFocusSessions } from '@/hooks/useAppData';
+import { useToast } from '@/hooks/useToast';
+import { diaryService } from '@/services/diaryService';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { ActivityStatusIcon } from '@/components/ActivityStatusIcon';
+import { todayISO, formatDate, addDays, getDayName, formatDuration, formatTimeFromDate } from '@/utils/date';
+
+export function DiaryPage() {
+  const toast = useToast();
+  const [searchParams] = useSearchParams();
+  const dailyRecords = useAllDailyRecords();
+  const activities = useActivities();
+  const tasks = useTasks();
+  const focusSessions = useFocusSessions();
+
+  const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || todayISO());
+  const [diaryText, setDiaryText] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const date = searchParams.get('date');
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) setSelectedDate(date);
+  }, [searchParams]);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    diaryService.getDiary(selectedDate).then((text) => {
+      if (active) {
+        setDiaryText(text);
+        setLoading(false);
+      }
+    });
+    return () => { active = false; };
+  }, [selectedDate]);
+
+  const isToday = selectedDate === todayISO();
+  const isFuture = selectedDate > todayISO();
+
+  const dayRecord = dailyRecords[selectedDate];
+  const dayFocusSessions = useMemo(
+    () => focusSessions.filter((s) => s.date === selectedDate && s.type === 'focus'),
+    [focusSessions, selectedDate]
+  );
+  const dayTasks = useMemo(
+    () => tasks.filter((t) => t.dueDate === selectedDate),
+    [tasks, selectedDate]
+  );
+
+  // Calendar with diary indicators
+  const now = new Date();
+  const [calMonth, setCalMonth] = useState(now.getMonth());
+  const [calYear, setCalYear] = useState(now.getFullYear());
+
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const days: (string | null)[] = [];
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      days.push(dateStr);
+    }
+    return days;
+  }, [calYear, calMonth]);
+
+  const hasDiary = (date: string) => {
+    const rec = dailyRecords[date];
+    return !!rec && rec.diaryNote.trim().length > 0;
+  };
+
+  const handleSave = async () => {
+    await diaryService.saveDiary(selectedDate, diaryText);
+    toast('Diary saved', 'success');
+  };
+
+  const prevMonth = () => {
+    if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
+    else setCalMonth(calMonth - 1);
+  };
+  const nextMonth = () => {
+    if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); }
+    else setCalMonth(calMonth + 1);
+  };
+
+  const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  return (
+    <div className="p-4 md:p-8 max-w-5xl mx-auto">
+      <PageHeader title="Diary" subtitle="Write about your day" />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        {/* Main diary editor */}
+        <div>
+          {/* Date navigation */}
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="btn-ghost px-3" aria-label="Previous day">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="text-center">
+              <h2 className="text-lg font-semibold text-ink dark:text-slate-100">{formatDate(selectedDate)}</h2>
+              <p className="text-sm text-ink-muted dark:text-slate-400">{getDayName(selectedDate)}</p>
+            </div>
+            <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="btn-ghost px-3" aria-label="Next day">
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Diary editor */}
+          <div className="card p-5 mb-4">
+            {isFuture ? (
+              <p className="text-sm text-ink-muted dark:text-slate-400 py-8 text-center">
+                You can't write diary entries for future dates.
+              </p>
+            ) : loading ? (
+              <div className="h-32 flex items-center justify-center">
+                <span className="text-sm text-ink-muted dark:text-slate-400">Loading...</span>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  className="input min-h-[200px] resize-y text-sm leading-relaxed"
+                  value={diaryText}
+                  onChange={(e) => setDiaryText(e.target.value)}
+                  placeholder="Write about your day..."
+                  autoFocus
+                />
+                <div className="flex justify-end mt-3">
+                  <button onClick={handleSave} className="btn-primary px-4 py-2 text-sm">
+                    <Save className="w-4 h-4" /> Save Entry
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Day summary */}
+          {!isFuture && (
+            <div className="space-y-4">
+              {/* Activities */}
+              <div className="card p-5">
+                <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-3">Activities</h3>
+                {activities.length === 0 ? (
+                  <p className="text-xs text-ink-muted dark:text-slate-400">No activities tracked.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {activities.map((a) => {
+                      const status = dayRecord?.activities[a.id];
+                      const isActive = (!a.startDate || selectedDate >= a.startDate) && (!a.endDate || selectedDate <= a.endDate);
+                      if (!isActive) return null;
+                      return (
+                        <div key={a.id} className="flex items-center gap-3 p-1.5">
+                          <ActivityStatusIcon status={status} size="sm" />
+                          <span className={`text-sm ${status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
+                            {a.name}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Tasks */}
+              <div className="card p-5">
+                <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-3">Tasks</h3>
+                {dayTasks.length === 0 ? (
+                  <p className="text-xs text-ink-muted dark:text-slate-400">No tasks due on this day.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {dayTasks.map((t) => (
+                      <div key={t.id} className="flex items-center gap-2 p-1.5">
+                        <span className={`w-2 h-2 rounded-full ${t.status === 'completed' ? 'bg-success' : t.status === 'in_progress' ? 'bg-primary' : t.status === 'blocked' ? 'bg-danger' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                        <span className={`text-sm ${t.status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
+                          {t.title}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Focus */}
+              <div className="card p-5">
+                <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-3">Focus Sessions</h3>
+                {dayFocusSessions.length === 0 ? (
+                  <p className="text-xs text-ink-muted dark:text-slate-400">No focus sessions on this day.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {dayFocusSessions.map((s) => (
+                      <div key={s.id} className="flex items-center gap-2 text-xs p-1.5">
+                        <span className="text-ink-muted dark:text-slate-400 w-12">{formatTimeFromDate(s.startTime)}</span>
+                        <span className="text-ink dark:text-slate-200 flex-1">
+                          {tasks.find((t) => t.id === s.taskId)?.title ?? activities.find((a) => a.id === s.activityId)?.name ?? 'Free focus'}
+                        </span>
+                        <span className="text-ink-muted dark:text-slate-400">{s.duration} min</span>
+                      </div>
+                    ))}
+                    <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700">
+                      <span className="text-sm font-medium text-ink dark:text-slate-200">
+                        Total: {formatDuration(dayFocusSessions.reduce((s, x) => s + x.duration, 0))}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Calendar sidebar */}
+        <div className="card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={prevMonth} className="btn-ghost p-1.5" aria-label="Previous month">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-sm font-semibold text-ink dark:text-slate-200">
+              {new Date(calYear, calMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </span>
+            <button onClick={nextMonth} className="btn-ghost p-1.5" aria-label="Next month">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {weekDays.map((d, i) => (
+              <div key={i} className="text-center text-xs text-ink-light dark:text-slate-500 font-medium py-1">{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((date, i) => {
+              if (!date) return <div key={i} />;
+              const dayNum = Number(date.split('-')[2]);
+              const isToday = date === todayISO();
+              const isSelected = date === selectedDate;
+              const hasEntry = hasDiary(date);
+              return (
+                <button
+                  key={date}
+                  onClick={() => setSelectedDate(date)}
+                  className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs transition-colors relative ${
+                    isSelected ? 'bg-primary text-white' :
+                    isToday ? 'bg-primary-50 text-primary dark:bg-primary/15 dark:text-primary-300 ring-1 ring-primary' :
+                    'hover:bg-slate-100 dark:hover:bg-slate-700 text-ink dark:text-slate-300'
+                  }`}
+                  aria-label={`${date}${hasEntry ? ' - has diary entry' : ''}`}
+                >
+                  <span>{dayNum}</span>
+                  {hasEntry && (
+                    <span className={`text-[8px] ${isSelected ? 'text-white' : ''}`}>
+                      <BookOpen className="w-2.5 h-2.5" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center gap-2 text-xs text-ink-muted dark:text-slate-400">
+            <BookOpen className="w-3 h-3" /> = has diary entry
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
