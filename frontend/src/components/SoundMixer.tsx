@@ -221,8 +221,8 @@ export function SoundMixer({ compact = false }: SoundMixerProps) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-ink dark:text-slate-200">Focus Sounds</h3>
         <div className="flex gap-1">
-          <button onClick={toggleMute} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={muted ? 'Unmute' : 'Mute'}>
-            {muted ? <VolumeX className="w-4 h-4 text-danger" /> : <Volume2 className="w-4 h-4 text-primary dark:text-primary-300" />}
+          <button onClick={toggleMute} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={audioService.isMuted() ? 'Unmute' : 'Mute'}>
+            {audioService.isMuted() ? <VolumeX className="w-4 h-4 text-danger" /> : <Volume2 className="w-4 h-4 text-primary dark:text-primary-300" />}
           </button>
           <button onClick={stopAll} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700" aria-label="Stop all">
             <Square className="w-4 h-4 text-ink-muted dark:text-slate-400" />

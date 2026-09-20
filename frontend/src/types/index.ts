@@ -38,7 +38,7 @@ export interface Activity {
   userId?: string;
   name: string;
   startDate?: string; // ISO date string (YYYY-MM-DD)
-  endDate?: string;
+  endDate?: string | null; // null = no end date, undefined/absent = same as null
   scheduledDays?: string[]; // ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
   pausePeriods?: PausePeriod[];
   createdAt: string;
