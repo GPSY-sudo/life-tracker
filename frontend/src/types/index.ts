@@ -1,15 +1,46 @@
 // ============================================================
+// AUTH
+// ============================================================
+
+/** Matches the backend User response shape (password is never returned). */
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Shape returned by POST /api/auth/register and POST /api/auth/login */
+export interface AuthResponse {
+  id: string;
+  name: string;
+  email: string;
+  token: string;
+}
+
+// ============================================================
 // CORE DATA MODELS
 // ============================================================
 
 /** A missing entry in a daily record represents a not-recorded activity. */
 export type ActivityStatus = 'partial' | 'completed' | 'incomplete';
 
+export interface PausePeriod {
+  startDate: string;
+  endDate: string;
+  reason?: string;
+}
+
 export interface Activity {
   id: string;
+  /** Present in backend responses but not used by the frontend. */
+  userId?: string;
   name: string;
   startDate?: string; // ISO date string (YYYY-MM-DD)
   endDate?: string;
+  scheduledDays?: string[]; // ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+  pausePeriods?: PausePeriod[];
   createdAt: string;
   updatedAt: string;
 }
@@ -24,8 +55,9 @@ export interface DailyRecord {
   date: string; // YYYY-MM-DD
   activities: Record<string, ActivityStatus>; // activityId -> status
   diaryNote: string;
-  createdAt: string;
-  updatedAt: string;
+  // Optional: absent in the backend's lazy stub when no DB row exists yet
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'blocked';
@@ -130,8 +162,13 @@ export interface SoundPreset {
 export interface SoundPreferences {
   masterVolume: number; // 0-100
   enabledSounds: SoundId[];
-  soundVolumes: Record<string, number>; // soundId -> 0-100
-  selectedPreset: string;
+  soundVolumes?: Record<string, number>; // soundId -> 0-100 (optional, defaults to {})
+  selectedPreset?: string; // optional, defaults to 'preset-rainy-focus'
+  customPresets?: Array<{
+    id: string;
+    name: string;
+    sounds: Record<string, number>;
+  }>; // User-created presets from backend
 }
 
 // ============================================================

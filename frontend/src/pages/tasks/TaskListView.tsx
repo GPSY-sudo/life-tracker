@@ -11,7 +11,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useTasks, useActivities } from '@/hooks/useAppData';
+import { useTasks, useActivities, syncTaskToState } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/useToast';
 import { taskService } from '@/services/taskService';
 import { TaskForm } from '@/components/TaskForm';
@@ -92,24 +92,43 @@ export function TaskListView({ onEditTask, onAddTask, onStartFocus }: TaskListVi
   }, [tasks, filter, priorityFilter, activityFilter, todayStr]);
 
   const handleToggleComplete = async (task: Task) => {
-    if (task.status === 'completed') {
-      await taskService.reopenTask(task.id);
-      toast('Task reopened', 'info');
-    } else {
-      await taskService.completeTask(task.id);
-      toast('Task completed', 'success');
+    try {
+      if (task.status === 'completed') {
+        const updated = await taskService.reopenTask(task.id);
+        syncTaskToState(updated);
+        toast('Task reopened', 'info');
+      } else {
+        const updated = await taskService.completeTask(task.id);
+        syncTaskToState(updated);
+        toast('Task completed', 'success');
+      }
+    } catch (err) {
+      toast('Failed to update task', 'error');
+      console.error(err);
     }
   };
 
   const handleStatusChange = async (taskId: string, status: TaskStatus) => {
-    await taskService.setStatus(taskId, status);
-    toast('Status updated', 'success');
+    try {
+      const updated = await taskService.setStatus(taskId, status);
+      syncTaskToState(updated);
+      toast('Status updated', 'success');
+    } catch (err) {
+      toast('Failed to update status', 'error');
+      console.error(err);
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    await taskService.deleteTask(deleteId);
-    toast('Task deleted', 'success');
+    try {
+      await taskService.deleteTask(deleteId);
+      syncTaskToState(null, deleteId);
+      toast('Task deleted', 'success');
+    } catch (err) {
+      toast('Failed to delete task', 'error');
+      console.error(err);
+    }
   };
 
   const getActivityName = (activityId?: string) => {

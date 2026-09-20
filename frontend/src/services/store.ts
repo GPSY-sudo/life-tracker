@@ -1,5 +1,5 @@
 import {
-  mockActivities, mockDailyRecords, mockTasks, mockFocusSessions, mockSoundPresets, defaultSettings,
+  mockActivities, mockDailyRecords, mockFocusSessions, mockSoundPresets, defaultSettings,
 } from '@/data/mockData';
 import type { Activity, DailyRecord, Task, FocusSession, SoundPreset, AppSettings, ActivityStatus } from '@/types';
 
@@ -8,7 +8,7 @@ class DataStore {
   dailyRecords: Record<string, DailyRecord> = Object.fromEntries(
     Object.entries(mockDailyRecords).map(([k, v]) => [k, { ...v, activities: { ...v.activities } }])
   );
-  tasks: Task[] = mockTasks.map((t) => ({ ...t, tags: [...t.tags] }));
+  tasks: Task[] = []; // Tasks are now API-backed, initialized empty here
   focusSessions: FocusSession[] = mockFocusSessions.map((s) => ({ ...s }));
   soundPresets: SoundPreset[] = mockSoundPresets.map((p) => ({ ...p, sounds: { ...p.sounds } }));
   settings: AppSettings = JSON.parse(JSON.stringify(defaultSettings));

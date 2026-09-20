@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSettings } from './useAppData';
+import { syncFocusSessionToState, loadFocusSessionsFromAPI } from './useAppData';
 import { focusService } from '@/services/focusService';
 import type { PomodoroMode } from '@/types';
 
@@ -56,6 +57,11 @@ export function usePomodoro(focusTarget?: { activityId?: string; taskId?: string
           taskId: focusTarget?.taskId,
           startTime: sessionStartRef.current ? new Date(sessionStartRef.current).toISOString() : undefined,
           endTime: new Date(now).toISOString(),
+        }).then((session) => {
+          // Sync the completed session into local state
+          syncFocusSessionToState(session);
+        }).catch((error) => {
+          console.error('Failed to save focus session:', error);
         });
       }
 

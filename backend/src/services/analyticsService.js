@@ -20,6 +20,48 @@ const isDateInRange = (date, startDate, endDate) => {
   return true;
 };
 
+const isDatePaused = (date, activity) => {
+  if (!activity.pausePeriods || activity.pausePeriods.length === 0) {
+    return false;
+  }
+  for (const pause of activity.pausePeriods) {
+    if (date >= pause.startDate && date <= pause.endDate) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const isDateApplicable = (date, activity, todayStr) => {
+  // Check date range (activity lifetime)
+  if (!isDateInRange(date, activity.startDate, activity.endDate)) {
+    return false;
+  }
+
+  // Check if date is paused
+  if (isDatePaused(date, activity)) {
+    return false;
+  }
+
+  // Check schedule (if schedule exists, verify the weekday)
+  if (activity.scheduledDays && activity.scheduledDays.length > 0) {
+    const d = new Date(date.split('-').map(Number));
+    d.setHours(0, 0, 0, 0);
+    const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayOfWeek = dayNames[d.getDay()];
+    if (!activity.scheduledDays.includes(dayOfWeek)) {
+      return false;
+    }
+  }
+
+  // Check if date is in the future
+  if (todayStr && date > todayStr) {
+    return false;
+  }
+
+  return true;
+};
+
 const activityWeight = (status) => {
   return status === 'completed' ? 1 : status === 'partial' ? 0.5 : 0;
 };
@@ -45,11 +87,16 @@ export const getMonthlyAnalytics = async (userId, year, month) => {
     let currentStreak = 0, bestStreak = 0, longestGap = 0, tempStreak = 0, tempGap = 0;
 
     for (const date of dates) {
-      if (date > todayStr) continue;
-      if (!isDateInRange(date, activity.startDate, activity.endDate)) continue;
+      // Use isDateApplicable to respect startDate, endDate, scheduledDays, pausePeriods, and future dates
+      if (!isDateApplicable(date, activity, todayStr)) continue;
 
       const record = recordsMap.get(date);
-      const status = record?.activities?.[activity._id.toString()];
+      let status = record?.activities?.[activity._id.toString()];
+
+      // Apply the new rule: past applicable unrecorded → incomplete (inferred at calculation time)
+      if (!status && date < todayStr) {
+        status = 'incomplete';
+      }
 
       activeDays++;
       totalScore += activityWeight(status);
@@ -63,23 +110,21 @@ export const getMonthlyAnalytics = async (userId, year, month) => {
         incompleteDays++; tempStreak = 0; tempGap++;
         if (tempGap > longestGap) longestGap = tempGap;
       } else {
-        if (date <= todayStr) {
-          tempStreak = 0; tempGap++;
-          if (tempGap > longestGap) longestGap = tempGap;
-        }
+        // No status recorded on current/future applicable date = not yet done
+        tempStreak = 0; tempGap++;
+        if (tempGap > longestGap) longestGap = tempGap;
       }
     }
 
+    // Compute current streak from all history (not just this month)
     const sortedDates = [...recordsMap.keys()].sort();
     let currentActiveStreak = 0;
     for (let i = sortedDates.length - 1; i >= 0; i--) {
       const d = sortedDates[i];
-      if (d > todayStr) continue;
-      if (!isDateInRange(d, activity.startDate, activity.endDate)) continue;
+      if (!isDateApplicable(d, activity, todayStr)) continue;
       
       const st = recordsMap.get(d)?.activities?.[activity._id.toString()];
       if (st === 'completed') currentActiveStreak++;
-      else if (st !== undefined) break; 
       else break;
     }
     
@@ -205,7 +250,8 @@ export const getMonthlyAnalytics = async (userId, year, month) => {
 
     let dayActive = 0, dayScore = 0, dayCompleted = 0;
     for (const activity of activities) {
-      if (!isDateInRange(date, activity.startDate, activity.endDate)) continue;
+      // Use isDateApplicable to count only applicable activities for this day
+      if (!isDateApplicable(date, activity, todayStr)) continue;
       dayActive++;
       const status = recordsMap.get(date)?.activities?.[activity._id.toString()];
       dayScore += activityWeight(status);
@@ -236,7 +282,8 @@ export const getMonthlyAnalytics = async (userId, year, month) => {
 
   for (const date of prevDates) {
     for (const activity of activities) {
-       if (!isDateInRange(date, activity.startDate, activity.endDate)) continue;
+       // Use isDateApplicable for previous month too (but todayStr will prevent future dates anyway)
+       if (!isDateApplicable(date, activity, todayStr)) continue;
        prevTotalActive++;
        const status = recordsMap.get(date)?.activities?.[activity._id.toString()];
        prevTotalScore += activityWeight(status);
@@ -276,9 +323,9 @@ export const getYearlyAnalytics = async (userId, year) => {
     let totalActive = 0, totalScore = 0;
 
     for (const date of dates) {
-      if (date > todayStr) continue;
       for (const activity of activities) {
-        if (!isDateInRange(date, activity.startDate, activity.endDate)) continue;
+        // Use isDateApplicable to respect all applicability rules
+        if (!isDateApplicable(date, activity, todayStr)) continue;
         totalActive++;
         const status = recordsMap.get(date)?.activities?.[activity._id.toString()];
         totalScore += activityWeight(status);

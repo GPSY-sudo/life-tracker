@@ -1,26 +1,97 @@
-import { useState, useMemo } from 'react';
-import { Play, Pause, RotateCcw, SkipForward, Clock, Target, ListChecks, Headphones } from 'lucide-react';
+
+import { useState, useMemo, useEffect } from 'react';
+import { Play, Pause, RotateCcw, SkipForward, Clock, Target, ListChecks, Volume2, VolumeX, Music } from 'lucide-react';
 import { usePomodoro } from '@/hooks/usePomodoro';
-import { useActivities, useTasks, useFocusSessions } from '@/hooks/useAppData';
+import { useActivities, useTasks, useFocusSessions, useSettings, loadFocusSessionsFromAPI, loadActivitiesFromAPI, loadTasksFromAPI, useSoundPresets, updateSoundPreferences } from '@/hooks/useAppData';
 import { SoundMixer } from '@/components/SoundMixer';
+import { audioService } from '@/services/audioService';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { formatTime, formatDuration, todayISO, formatTimeFromDate } from '@/utils/date';
-import type { PomodoroMode } from '@/types';
+import type { PomodoroMode, SoundId } from '@/types';
 
 export function FocusPage() {
   const activities = useActivities();
   const tasks = useTasks();
   const focusSessions = useFocusSessions();
+  const settings = useSettings();
+  const presets = useSoundPresets();
 
   const [focusActivityId, setFocusActivityId] = useState<string>('');
   const [focusTaskId, setFocusTaskId] = useState<string>('');
+  
+  // Subscribe to audioService state changes - forces re-render when audio state changes
+  const [, setAudioStateVersion] = useState(0);
 
-  const focusTarget = {
-    activityId: focusActivityId || undefined,
-    taskId: focusTaskId || undefined,
+  // Load activities, tasks, and focus sessions from API on mount
+  useEffect(() => {
+    Promise.all([
+      loadActivitiesFromAPI().catch(() => {}),
+      loadTasksFromAPI().catch(() => {}),
+      loadFocusSessionsFromAPI().catch((error) => {
+        console.error('Failed to load focus sessions:', error);
+      }),
+    ]);
+  }, []);
+
+  // Subscribe to audioService notifications
+  useEffect(() => {
+    const unsubscribe = audioService.subscribe(() => {
+      setAudioStateVersion((v) => v + 1);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Sound control handlers - call audioService directly
+  const handlePlayPause = () => {
+    const hasPlaying = audioService.hasAnyPlaying();
+    if (hasPlaying) {
+      // Pause: preserve configuration
+      audioService.pauseAll();
+    } else if (settings.sounds.enabledSounds && settings.sounds.enabledSounds.length > 0) {
+      // Play: resume saved sounds using their saved volumes
+      const volumes = settings.sounds.soundVolumes || {};
+      for (const soundId of settings.sounds.enabledSounds) {
+        const vol = volumes[soundId] ?? 50;
+        audioService.play(soundId, vol);
+      }
+    }
   };
 
-  const pomodoro = usePomodoro(focusTarget);
+  const handleMute = () => {
+    const isMuted = audioService.isMuted();
+    if (isMuted) {
+      audioService.unmuteAll();
+    } else {
+      audioService.muteAll();
+    }
+  };
+
+  const handleMasterVolumeChange = (value: number) => {
+    audioService.setMasterVolume(value);
+    updateSoundPreferences({ masterVolume: value });
+  };
+
+  // Display name based on selectedPreset or enabledSounds
+  const getSoundDisplayName = (): string => {
+    const selectedPreset = settings.sounds.selectedPreset;
+    const enabledSounds = settings.sounds.enabledSounds || [];
+    
+    // If a preset is selected, show its name
+    if (selectedPreset) {
+      const preset = presets.find((p) => p.id === selectedPreset);
+      if (preset) {
+        return preset.name;
+      }
+    }
+
+    // If sounds are enabled but no preset selected, show sound names
+    if (enabledSounds.length > 0) {
+      return enabledSounds.join(' + ');
+    }
+
+    // Default: no sound selected
+    return 'No sound selected';
+  };
 
   const todayStr = todayISO();
   const todaySessions = useMemo(
@@ -43,6 +114,20 @@ export function FocusPage() {
     shortBreak: 'text-success dark:text-green-400',
     longBreak: 'text-warning dark:text-amber-400',
   };
+  
+  // Get the total duration in seconds for the current mode
+  const getTotalDurationSeconds = (mode: PomodoroMode): number => {
+    if (mode === 'focus') return settings.pomodoro.focusDuration * 60;
+    if (mode === 'shortBreak') return settings.pomodoro.shortBreakDuration * 60;
+    return settings.pomodoro.longBreakDuration * 60;
+  };
+
+  const focusTarget = {
+    activityId: focusActivityId || undefined,
+    taskId: focusTaskId || undefined,
+  };
+
+  const pomodoro = usePomodoro(focusTarget);
 
   const pendingTasks = tasks.filter((t) => t.status !== 'completed');
 
@@ -82,7 +167,7 @@ export function FocusPage() {
                 strokeLinecap="round"
                 className={modeColors[pomodoro.mode]}
                 strokeDasharray={2 * Math.PI * 110}
-                strokeDashoffset={2 * Math.PI * 110 * (1 - pomodoro.timeRemaining / (pomodoro.mode === 'focus' ? 25 * 60 : pomodoro.mode === 'shortBreak' ? 5 * 60 : 15 * 60))}
+                strokeDashoffset={2 * Math.PI * 110 * (1 - pomodoro.timeRemaining / getTotalDurationSeconds(pomodoro.mode))}
                 style={{ transition: 'stroke-dashoffset 0.3s ease' }}
               />
             </svg>
@@ -171,8 +256,70 @@ export function FocusPage() {
             )}
           </div>
 
-          {/* Sound Mixer (compact) */}
-          <SoundMixer compact />
+          {/* Sound Controller Card */}
+          <div className="card p-5">
+            {/* Row 1: Quick Controls */}
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Music className="w-5 h-5 text-primary dark:text-primary-300" />
+                <span className="text-sm font-medium text-ink dark:text-slate-200">
+                  {getSoundDisplayName()}
+                </span>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={handlePlayPause}
+                  className="btn-secondary px-3 py-1.5 text-xs md:text-sm flex items-center gap-1"
+                  aria-label={audioService.hasAnyPlaying() ? 'Pause sounds' : 'Play sounds'}
+                >
+                  {audioService.hasAnyPlaying() ? (
+                    <>
+                      <Pause className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Pause</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Play</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleMute}
+                  className="btn-secondary px-3 py-1.5 text-xs md:text-sm flex items-center gap-1"
+                  aria-label={audioService.isMuted() ? 'Unmute' : 'Mute'}
+                >
+                  {audioService.isMuted() ? (
+                    <>
+                      <VolumeX className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Unmute</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Mute</span>
+                    </>
+                  )}
+                </button>
+                <SoundMixer compact />
+              </div>
+            </div>
+
+            {/* Row 2: Master Volume */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-medium text-ink-muted dark:text-slate-400 min-w-max">Master Volume</span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={audioService.getMasterVolume()}
+                onChange={(e) => handleMasterVolumeChange(Number(e.target.value))}
+                className="flex-1"
+                aria-label="Master volume"
+              />
+              <span className="text-xs text-ink-muted dark:text-slate-400 min-w-max">{audioService.getMasterVolume()}%</span>
+            </div>
+          </div>
 
           {/* Today's Stats */}
           <div className="card p-5">
@@ -194,9 +341,9 @@ export function FocusPage() {
             {/* Session history */}
             {todaySessions.length > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <p className="text-xs font-medium text-ink-muted dark:text-slate-400 mb-2">Session History</p>
+                <p className="text-xs font-medium text-ink-muted dark:text-slate-400 mb-2">Recent Focus</p>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                  {todaySessions.map((s) => (
+                  {[...todaySessions].sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()).map((s) => (
                     <div key={s.id} className="flex items-center gap-2 text-xs">
                       <span className="text-ink-muted dark:text-slate-400 w-12">{formatTimeFromDate(s.startTime)}</span>
                       <span className="text-ink dark:text-slate-200 flex-1 truncate">

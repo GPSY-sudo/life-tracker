@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   Circle,
 } from 'lucide-react';
-import { useActivities, useTasks, useFocusSessions, useDailyRecord } from '@/hooks/useAppData';
+import { useActivities, useTasks, useFocusSessions, useDailyRecord, loadActivitiesFromAPI, loadTasksFromAPI, loadFocusSessionsFromAPI, updateActivityStatusAndSync, syncTaskToState } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/useToast';
 import { dailyService } from '@/services/dailyService';
 import { taskService } from '@/services/taskService';
@@ -20,7 +20,7 @@ import { diaryService } from '@/services/diaryService';
 import { ActivityStatusIcon } from '@/components/ActivityStatusIcon';
 import { PriorityBadge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { todayISO, formatDate, addDays, getDayName, formatDuration, toISODate } from '@/utils/date';
+import { todayISO, formatDate, addDays, getDayName, formatDuration, toISODate, isDateApplicable } from '@/utils/date';
 import type { ActivityStatus } from '@/types';
 
 export function TodayPage() {
@@ -35,6 +35,21 @@ export function TodayPage() {
   const [diaryLoaded, setDiaryLoaded] = useState(false);
 
   const dayRecord = useDailyRecord(selectedDate);
+
+  // Load activities, tasks, and focus sessions on mount if not already loaded
+  useEffect(() => {
+    Promise.all([
+      loadActivitiesFromAPI().catch(() => {
+        // Silently fail — activities may already be loaded
+      }),
+      loadTasksFromAPI().catch(() => {
+        // Silently fail — tasks may already be loaded
+      }),
+      loadFocusSessionsFromAPI().catch(() => {
+        // Silently fail — focus sessions may already be loaded
+      }),
+    ]);
+  }, []);
 
   // Load diary text when date changes
   useEffect(() => {
@@ -67,10 +82,15 @@ export function TodayPage() {
     let score = 0;
     let total = 0;
     for (const activity of activities) {
-      if (activity.startDate && selectedDate < activity.startDate) continue;
-      if (activity.endDate && selectedDate > activity.endDate) continue;
+      if (!isDateApplicable(selectedDate, activity)) continue;
+      let status = dayRecord?.activities[activity.id];
+      
+      // Apply the new rule: past applicable unrecorded → incomplete
+      if (!status && selectedDate < todayISO()) {
+        status = 'incomplete';
+      }
+      
       total++;
-      const status = dayRecord?.activities[activity.id];
       if (status === 'completed') completed++;
       if (status === 'completed') score += 1;
       else if (status === 'partial') score += 0.5;
@@ -91,19 +111,37 @@ export function TodayPage() {
   const pendingTasks = dayTasks.filter((t) => t.status !== 'completed').length;
 
   const handleCycleActivity = async (activityId: string) => {
+    // Get the stored status (ignore inferred state for cycling)
     const current = dayRecord?.activities[activityId];
+    
     const next: ActivityStatus | undefined =
-      !current ? 'partial' : current === 'partial' ? 'completed' : current === 'completed' ? 'incomplete' : undefined;
-    await dailyService.updateActivityStatus(selectedDate, activityId, next);
+      !current ? 'partial' : 
+      current === 'partial' ? 'completed' : 
+      current === 'completed' ? 'incomplete' : 
+      current === 'incomplete' ? undefined : 
+      undefined;
+    try {
+      await updateActivityStatusAndSync(selectedDate, activityId, next);
+    } catch (err) {
+      toast('Failed to update activity status', 'error');
+      console.error(err);
+    }
   };
 
   const handleToggleTask = async (taskId: string, currentStatus: string) => {
-    if (currentStatus === 'completed') {
-      await taskService.reopenTask(taskId);
-      toast('Task reopened', 'info');
-    } else {
-      await taskService.completeTask(taskId);
-      toast('Task completed', 'success');
+    try {
+      if (currentStatus === 'completed') {
+        const updated = await taskService.reopenTask(taskId);
+        syncTaskToState(updated);
+        toast('Task reopened', 'info');
+      } else {
+        const updated = await taskService.completeTask(taskId);
+        syncTaskToState(updated);
+        toast('Task completed', 'success');
+      }
+    } catch (err) {
+      toast('Failed to update task', 'error');
+      console.error(err);
     }
   };
 
@@ -175,9 +213,7 @@ export function TodayPage() {
             <div className="space-y-1 mb-4">
               {activities.map((activity) => {
                 const status = dayRecord?.activities[activity.id];
-                const isActive =
-                  (!activity.startDate || selectedDate >= activity.startDate) &&
-                  (!activity.endDate || selectedDate <= activity.endDate);
+                const isActive = isDateApplicable(selectedDate, activity);
                 if (!isActive) return null;
                 return (
                   <button

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { List, Columns, Plus } from 'lucide-react';
-import { useTasks } from '@/hooks/useAppData';
+import { useTasks, loadTasksFromAPI, syncTaskToState } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/useToast';
 import { taskService } from '@/services/taskService';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -21,6 +21,14 @@ export function TasksPage() {
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus | undefined>(undefined);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
 
+  // Load tasks on mount
+  useEffect(() => {
+    loadTasksFromAPI().catch((err) => {
+      console.error('Failed to load tasks:', err);
+      toast('Failed to load tasks', 'error');
+    });
+  }, [toast]);
+
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setFormOpen(true);
@@ -37,13 +45,20 @@ export function TasksPage() {
     navigate('/focus');
   };
 
-  const handleSubmit = (data: Parameters<typeof taskService.createTask>[0]) => {
-    if (editingTask) {
-      taskService.updateTask(editingTask.id, data);
-      toast('Task updated', 'success');
-    } else {
-      taskService.createTask(data);
-      toast('Task added', 'success');
+  const handleSubmit = async (data: Parameters<typeof taskService.createTask>[0]) => {
+    try {
+      if (editingTask) {
+        const updated = await taskService.updateTask(editingTask.id, data);
+        syncTaskToState(updated);
+        toast('Task updated', 'success');
+      } else {
+        const created = await taskService.createTask(data);
+        syncTaskToState(created);
+        toast('Task added', 'success');
+      }
+    } catch (err) {
+      toast('Failed to save task', 'error');
+      console.error(err);
     }
   };
 

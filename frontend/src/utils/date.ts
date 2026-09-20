@@ -120,3 +120,45 @@ export function getWeekDates(date: string): string[] {
   const start = startOfWeek(date);
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }
+
+/**
+ * Check if a date is applicable for an activity based on:
+ * 1. Date is within activity lifetime (startDate/endDate)
+ * 2. Date's weekday is scheduled (if scheduledDays exists)
+ */
+export function isDateApplicable(date: string, activity: { startDate?: string; endDate?: string; scheduledDays?: string[]; pausePeriods?: Array<{ startDate: string; endDate: string }> }): boolean {
+  // Check date range
+  if (activity.startDate && date < activity.startDate) return false;
+  if (activity.endDate && date > activity.endDate) return false;
+
+  // Check pause periods
+  if (isDatePaused(date, activity)) return false;
+
+  // Check schedule (if schedule exists, verify the weekday)
+  if (activity.scheduledDays && activity.scheduledDays.length > 0) {
+    const d = parseISODate(date);
+    const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayOfWeek = dayNames[d.getDay()];
+
+    return activity.scheduledDays.includes(dayOfWeek);
+  }
+
+  // If no schedule is set, all days are applicable (backward compatible)
+  return true;
+}
+
+/**
+ * Check if a date is within a pause period for an activity.
+ */
+export function isDatePaused(date: string, activity: { pausePeriods?: Array<{ startDate: string; endDate: string }> }): boolean {
+  if (!activity.pausePeriods || activity.pausePeriods.length === 0) {
+    return false;
+  }
+
+  for (const pause of activity.pausePeriods) {
+    if (date >= pause.startDate && date <= pause.endDate) {
+      return true;
+    }
+  }
+  return false;
+}

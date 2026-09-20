@@ -1,7 +1,5 @@
-import { store } from './store';
+import { apiFetch } from './api';
 import type { FocusSession, FocusSessionType } from '@/types';
-
-const delay = (ms = 50) => new Promise((r) => setTimeout(r, ms));
 
 function toISODate(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -9,19 +7,18 @@ function toISODate(date: Date): string {
 
 export const focusService = {
   async getSessions(): Promise<FocusSession[]> {
-    await delay();
-    return [...store.focusSessions];
+    return apiFetch<FocusSession[]>('/focus/sessions');
   },
 
   async getTodaySessions(): Promise<FocusSession[]> {
-    await delay();
+    const sessions = await apiFetch<FocusSession[]>('/focus/sessions');
     const today = toISODate(new Date());
-    return store.focusSessions.filter((s) => s.date === today && s.type === 'focus');
+    return sessions.filter((s) => s.date === today && s.type === 'focus');
   },
 
   async getSessionsForDate(date: string): Promise<FocusSession[]> {
-    await delay();
-    return store.focusSessions.filter((s) => s.date === date);
+    const sessions = await apiFetch<FocusSession[]>('/focus/sessions');
+    return sessions.filter((s) => s.date === date);
   },
 
   async completeSession(data: {
@@ -32,21 +29,22 @@ export const focusService = {
     startTime?: string;
     endTime?: string;
   }): Promise<FocusSession> {
-    await delay();
     const now = data.endTime ? new Date(data.endTime) : new Date();
     const start = data.startTime ? new Date(data.startTime) : new Date(now.getTime() - data.duration * 60 * 1000);
-    const session: FocusSession = {
-      id: store.generateId('fs'),
-      date: toISODate(now),
+    
+    const payload = {
+      type: data.type,
+      duration: data.duration,
       startTime: start.toISOString(),
       endTime: now.toISOString(),
-      duration: data.duration,
-      type: data.type,
-      activityId: data.activityId,
-      taskId: data.taskId,
+      ...(data.activityId && { activityId: data.activityId }),
+      ...(data.taskId && { taskId: data.taskId }),
     };
-    store.addFocusSession(session);
-    return session;
+
+    return apiFetch<FocusSession>('/focus/sessions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 
   async getFocusStats(): Promise<{
@@ -55,14 +53,14 @@ export const focusService = {
     weekPomodoros: number;
     weekFocusMinutes: number;
   }> {
-    await delay();
+    const sessions = await apiFetch<FocusSession[]>('/focus/sessions');
     const today = toISODate(new Date());
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const weekAgoStr = toISODate(weekAgo);
 
-    const todaySessions = store.focusSessions.filter((s) => s.date === today && s.type === 'focus');
-    const weekSessions = store.focusSessions.filter(
+    const todaySessions = sessions.filter((s) => s.date === today && s.type === 'focus');
+    const weekSessions = sessions.filter(
       (s) => s.date >= weekAgoStr && s.date <= today && s.type === 'focus'
     );
 

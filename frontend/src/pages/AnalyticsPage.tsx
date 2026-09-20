@@ -6,10 +6,10 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown, Award, Flame, Calendar, Clock, BookOpen, Target } from 'lucide-react';
 import { analyticsService } from '@/services/analyticsService';
-import { useActivities, useTasks, useFocusSessions, useAllDailyRecords } from '@/hooks/useAppData';
+import { useActivities, useTasks, useFocusSessions, useAllDailyRecords, loadFocusSessionsFromAPI, loadActivitiesFromAPI, loadTasksFromAPI } from '@/hooks/useAppData';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { formatMonthYear, getMonthName, formatDuration, todayISO, toISODate, parseISODate } from '@/utils/date';
+import { formatMonthYear, getMonthName, formatDuration, todayISO, toISODate, parseISODate, isDateApplicable } from '@/utils/date';
 import type { MonthlyAnalytics, FocusAnalytics, ActivityAnalytics, TaskAnalytics, DiaryAnalytics } from '@/types';
 
 type Tab = 'overview' | 'trends' | 'activities' | 'tasks' | 'focus' | 'diary' | 'calendar' | 'review';
@@ -38,7 +38,18 @@ export function AnalyticsPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    analyticsService.getMonthlyAnalytics(year, month).then((data) => {
+    Promise.all([
+      loadActivitiesFromAPI().catch(() => {
+        // Silently fail — activities may already be loaded
+      }),
+      loadTasksFromAPI().catch(() => {
+        // Silently fail — tasks may already be loaded
+      }),
+      loadFocusSessionsFromAPI().catch(() => {
+        // Silently fail — focus sessions may already be loaded
+      }),
+      analyticsService.getMonthlyAnalytics(year, month),
+    ]).then(([, , , data]) => {
       if (active) {
         setAnalytics(data);
         setLoading(false);
@@ -181,16 +192,27 @@ function TrendsTab({ analytics, year }: { analytics: MonthlyAnalytics; year: num
   return (
     <div className="space-y-4">
       <div className="card p-5">
-        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Monthly Comparison (This Year)</h3>
+        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Monthly Completion (This Year)</h3>
         <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={yearlyData.map((d) => ({ month: getMonthName(d.month).slice(0, 3), completion: d.completion, focus: d.focusMinutes }))}>
+          <BarChart data={yearlyData.map((d) => ({ month: getMonthName(d.month).slice(0, 3), completion: d.completion }))}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
             <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-            <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} />
-            <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Bar dataKey="completion" fill="#3B82F6" name="Completion %" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="focus" fill="#22C55E" name="Focus (min)" radius={[4, 4, 0, 0]} />
+            <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" domain={[0, 100]} label={{ value: 'Completion %', angle: -90, position: 'insideLeft' }} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} formatter={(value: any) => `${value}%`} />
+            <Bar dataKey="completion" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="card p-5">
+        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Monthly Focus Time (This Year)</h3>
+        <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={yearlyData.map((d) => ({ month: getMonthName(d.month).slice(0, 3), focus: d.focusMinutes }))}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
+            <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+            <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" label={{ value: 'Focus (min)', angle: -90, position: 'insideLeft' }} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} formatter={(value: any) => `${value} min`} />
+            <Bar dataKey="focus" fill="#22C55E" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -212,8 +234,12 @@ function TrendsTab({ analytics, year }: { analytics: MonthlyAnalytics; year: num
 }
 
 function ActivitiesTab({ analytics }: { analytics: MonthlyAnalytics }) {
-  const best = [...analytics.activityAnalytics].sort((a, b) => b.completionRate - a.completionRate)[0];
-  const weakest = [...analytics.activityAnalytics].sort((a, b) => a.completionRate - b.completionRate)[0];
+  const best = [...analytics.activityAnalytics]
+    .filter((a) => a.completionRate > 0)
+    .sort((a, b) => b.completionRate - a.completionRate)[0];
+  const weakest = [...analytics.activityAnalytics]
+    .filter((a) => a.completionRate > 0)
+    .sort((a, b) => a.completionRate - b.completionRate)[0];
 
   return (
     <div className="space-y-4">
@@ -226,6 +252,15 @@ function ActivitiesTab({ analytics }: { analytics: MonthlyAnalytics }) {
             </div>
             <p className="text-lg font-bold text-ink dark:text-slate-100">{best.activityName}</p>
             <p className="text-sm text-success-text dark:text-green-400">{best.completionRate}% completion</p>
+          </div>
+        )}
+        {!best && (
+          <div className="card p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="w-4 h-4 text-slate-400" />
+              <span className="text-xs font-medium text-ink-muted dark:text-slate-400">Best Activity</span>
+            </div>
+            <p className="text-sm text-ink-muted dark:text-slate-400">No completed activities yet</p>
           </div>
         )}
         {weakest && weakest.activityId !== best?.activityId && (
@@ -300,12 +335,13 @@ function TasksTab({ analytics }: { analytics: MonthlyAnalytics }) {
         <div className="card p-5">
           <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Task Distribution</h3>
           {pieData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={(e: any) => e.name}>
+                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={false}>
                   {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
                 </Pie>
-                <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '12px' }} />
+                <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '12px' }} formatter={(value: any) => value} />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '16px' }} verticalAlign="bottom" />
               </PieChart>
             </ResponsiveContainer>
           ) : <p className="text-sm text-ink-muted dark:text-slate-400 text-center py-8">No tasks</p>}
@@ -347,10 +383,38 @@ function FocusTab({ analytics }: { analytics: MonthlyAnalytics }) {
 
   const byActivityData = Object.entries(fa.byActivity)
     .map(([id, minutes]) => ({ name: activities.find((a) => a.id === id)?.name ?? 'Unknown', minutes }))
+    .reduce((acc, item) => {
+      // Group all "Unknown" entries into a single Unknown category
+      if (item.name === 'Unknown') {
+        const existing = acc.find((x) => x.name === 'Unknown');
+        if (existing) {
+          existing.minutes += item.minutes;
+        } else {
+          acc.push(item);
+        }
+      } else {
+        acc.push(item);
+      }
+      return acc;
+    }, [] as Array<{ name: string; minutes: number }>)
     .sort((a, b) => b.minutes - a.minutes);
 
   const byTaskData = Object.entries(fa.byTask)
     .map(([id, minutes]) => ({ name: tasks.find((t) => t.id === id)?.title ?? 'Unknown', minutes }))
+    .reduce((acc, item) => {
+      // Group all "Unknown" entries into a single Unknown category
+      if (item.name === 'Unknown') {
+        const existing = acc.find((x) => x.name === 'Unknown');
+        if (existing) {
+          existing.minutes += item.minutes;
+        } else {
+          acc.push(item);
+        }
+      } else {
+        acc.push(item);
+      }
+      return acc;
+    }, [] as Array<{ name: string; minutes: number }>)
     .sort((a, b) => b.minutes - a.minutes);
 
   return (
@@ -477,8 +541,8 @@ function CalendarTab({ year, month }: { year: number; month: number }) {
     if (!rec) return 0;
     let active = 0, score = 0;
     for (const a of activities) {
-      if (a.startDate && date < a.startDate) continue;
-      if (a.endDate && date > a.endDate) continue;
+      // Use isDateApplicable to respect startDate, endDate, scheduledDays, pausePeriods, and future dates
+      if (!isDateApplicable(date, a)) continue;
       active++;
       const status = rec?.activities[a.id];
       score += status === 'completed' ? 1 : status === 'partial' ? 0.5 : 0;
@@ -562,8 +626,12 @@ function ReviewTab({ analytics, year, month }: { analytics: MonthlyAnalytics; ye
     );
   }
 
-  const best = [...analytics.activityAnalytics].sort((a, b) => b.completionRate - a.completionRate)[0];
-  const weakest = [...analytics.activityAnalytics].sort((a, b) => a.completionRate - b.completionRate)[0];
+  const best = [...analytics.activityAnalytics]
+    .filter((a) => a.completionRate > 0)
+    .sort((a, b) => b.completionRate - a.completionRate)[0];
+  const weakest = [...analytics.activityAnalytics]
+    .filter((a) => a.completionRate > 0)
+    .sort((a, b) => a.completionRate - b.completionRate)[0];
   const bestStreak = [...analytics.activityAnalytics].sort((a, b) => b.bestStreak - a.bestStreak)[0];
 
   return (
@@ -594,6 +662,15 @@ function ReviewTab({ analytics, year, month }: { analytics: MonthlyAnalytics; ye
             </div>
             <p className="text-lg font-bold text-ink dark:text-slate-100">{best.activityName}</p>
             <p className="text-sm text-success-text dark:text-green-400">{best.completionRate}% ({best.completedDays} days)</p>
+          </div>
+        )}
+        {!best && (
+          <div className="card p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="w-4 h-4 text-slate-400" />
+              <span className="text-xs font-medium text-ink-muted dark:text-slate-400">Best Activity</span>
+            </div>
+            <p className="text-sm text-ink-muted dark:text-slate-400">No completed activities yet</p>
           </div>
         )}
         {weakest && weakest.activityId !== best?.activityId && (

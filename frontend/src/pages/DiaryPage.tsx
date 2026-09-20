@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, BookOpen, Save, Calendar } from 'lucide-react';
-import { useAllDailyRecords, useActivities, useTasks, useFocusSessions } from '@/hooks/useAppData';
+import { useAllDailyRecords, useActivities, useTasks, useFocusSessions, loadActivitiesFromAPI, loadFocusSessionsFromAPI, updateDiaryNoteAndSync, loadDailyRecordsForRange } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/useToast';
 import { diaryService } from '@/services/diaryService';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ActivityStatusIcon } from '@/components/ActivityStatusIcon';
-import { todayISO, formatDate, addDays, getDayName, formatDuration, formatTimeFromDate } from '@/utils/date';
+import { todayISO, formatDate, addDays, getDayName, formatDuration, formatTimeFromDate, isDateApplicable } from '@/utils/date';
 
 export function DiaryPage() {
   const toast = useToast();
@@ -19,6 +19,19 @@ export function DiaryPage() {
   const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || todayISO());
   const [diaryText, setDiaryText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load activities and focus sessions on mount if not already loaded
+  useEffect(() => {
+    Promise.all([
+      loadActivitiesFromAPI().catch(() => {
+        // Silently fail — activities may already be loaded
+      }),
+      loadFocusSessionsFromAPI().catch(() => {
+        // Silently fail — focus sessions may already be loaded
+      }),
+    ]);
+  }, []);
 
   useEffect(() => {
     const date = searchParams.get('date');
@@ -28,12 +41,21 @@ export function DiaryPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    diaryService.getDiary(selectedDate).then((text) => {
-      if (active) {
-        setDiaryText(text);
-        setLoading(false);
-      }
-    });
+    setError(null);
+    diaryService.getDiary(selectedDate)
+      .then((text) => {
+        if (active) {
+          setDiaryText(text);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          console.error('Failed to load diary:', err);
+          setError('Failed to load diary entry');
+          setLoading(false);
+        }
+      });
     return () => { active = false; };
   }, [selectedDate]);
 
@@ -67,14 +89,30 @@ export function DiaryPage() {
     return days;
   }, [calYear, calMonth]);
 
+  // Load daily records for the displayed calendar month
+  useEffect(() => {
+    const startDate = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(calYear, calMonth + 1, 0).getDate();
+    const endDate = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    loadDailyRecordsForRange(startDate, endDate).catch((err) => {
+      console.error('Failed to load daily records for calendar:', err);
+      // Silently fail — calendar can still show without data
+    });
+  }, [calYear, calMonth]);
+
   const hasDiary = (date: string) => {
     const rec = dailyRecords[date];
     return !!rec && rec.diaryNote.trim().length > 0;
   };
 
   const handleSave = async () => {
-    await diaryService.saveDiary(selectedDate, diaryText);
-    toast('Diary saved', 'success');
+    try {
+      await updateDiaryNoteAndSync(selectedDate, diaryText);
+      toast('Diary saved', 'success');
+    } catch (err) {
+      toast('Failed to save diary', 'error');
+      console.error(err);
+    }
   };
 
   const prevMonth = () => {
@@ -115,6 +153,10 @@ export function DiaryPage() {
               <p className="text-sm text-ink-muted dark:text-slate-400 py-8 text-center">
                 You can't write diary entries for future dates.
               </p>
+            ) : error ? (
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-danger-text dark:text-red-400">{error}</p>
+              </div>
             ) : loading ? (
               <div className="h-32 flex items-center justify-center">
                 <span className="text-sm text-ink-muted dark:text-slate-400">Loading...</span>
@@ -148,9 +190,15 @@ export function DiaryPage() {
                 ) : (
                   <div className="space-y-1">
                     {activities.map((a) => {
-                      const status = dayRecord?.activities[a.id];
-                      const isActive = (!a.startDate || selectedDate >= a.startDate) && (!a.endDate || selectedDate <= a.endDate);
+                      const isActive = isDateApplicable(selectedDate, a);
                       if (!isActive) return null;
+                      let status = dayRecord?.activities[a.id];
+                      
+                      // Apply the new rule: past applicable unrecorded → incomplete
+                      if (!status && selectedDate < todayISO()) {
+                        status = 'incomplete';
+                      }
+                      
                       return (
                         <div key={a.id} className="flex items-center gap-3 p-1.5">
                           <ActivityStatusIcon status={status} size="sm" />

@@ -1,41 +1,57 @@
-import { store } from './store';
+import { apiFetch } from './api';
 import type { DailyRecord, ActivityStatus } from '@/types';
 
-const delay = (ms = 50) => new Promise((r) => setTimeout(r, ms));
-
 export const dailyService = {
+  /** GET /api/days/:date — returns real doc or the backend stub shape */
   async getDay(date: string): Promise<DailyRecord> {
-    await delay();
-    return store.getDay(date) ?? { id: `day-${date}`, date, activities: {}, diaryNote: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    return apiFetch<DailyRecord>(`/days/${date}`);
   },
 
+  /**
+   * GET /api/days?start=YYYY-MM-DD&end=YYYY-MM-DD
+   * Returns only dates that have an existing DailyRecord in the DB.
+   * Dates with no record simply won't appear — callers must treat missing
+   * dates as the empty stub: { activities: {}, diaryNote: '' }.
+   */
   async getDays(startDate: string, endDate: string): Promise<DailyRecord[]> {
-    await delay();
-    const days: DailyRecord[] = [];
-    const [sy, sm, sd] = startDate.split('-').map(Number);
-    const [ey, em, ed] = endDate.split('-').map(Number);
-    const start = new Date(sy, sm - 1, sd);
-    const end = new Date(ey, em - 1, ed);
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const existing = store.getDay(dateStr);
-      if (existing) days.push(existing);
-    }
-    return days;
+    return apiFetch<DailyRecord[]>(
+      `/days?start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`,
+    );
   },
 
-  async updateActivityStatus(date: string, activityId: string, status?: ActivityStatus): Promise<void> {
-    await delay();
-    store.setActivityStatus(date, activityId, status);
+  /**
+   * PUT /api/days/:date/activity/:activityId
+   * Sends { status } — null/undefined means "not recorded" (removes the key).
+   */
+  async updateActivityStatus(
+    date: string,
+    activityId: string,
+    status?: ActivityStatus,
+  ): Promise<DailyRecord> {
+    return apiFetch<DailyRecord>(`/days/${date}/activity/${activityId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: status ?? null }),
+    });
   },
 
-  async cycleActivityStatus(date: string, activityId: string): Promise<ActivityStatus | undefined> {
-    await delay();
-    const day = store.getOrCreateDay(date);
-    const current = day.activities[activityId];
+  /**
+   * Applies the four-state cycle locally, then persists via updateActivityStatus.
+   * Not recorded → partial → completed → incomplete → not recorded
+   */
+  async cycleActivityStatus(
+    date: string,
+    activityId: string,
+    current?: ActivityStatus,
+  ): Promise<ActivityStatus | undefined> {
     const next: ActivityStatus | undefined =
-      !current ? 'partial' : current === 'partial' ? 'completed' : current === 'completed' ? 'incomplete' : undefined;
-    store.setActivityStatus(date, activityId, next);
+      !current
+        ? 'partial'
+        : current === 'partial'
+          ? 'completed'
+          : current === 'completed'
+            ? 'incomplete'
+            : undefined;
+    await dailyService.updateActivityStatus(date, activityId, next);
     return next;
   },
 };
