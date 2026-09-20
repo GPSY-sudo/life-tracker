@@ -118,7 +118,7 @@ export function TodayPage() {
       !current ? 'partial' : 
       current === 'partial' ? 'completed' : 
       current === 'completed' ? 'incomplete' : 
-      current === 'incomplete' ? undefined : 
+      current === 'incomplete' ? 'partial' : 
       undefined;
     try {
       await updateActivityStatusAndSync(selectedDate, activityId, next);

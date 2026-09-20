@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import {
   Target,
   ListChecks,
@@ -30,6 +31,7 @@ import type { ActivityStatus } from '@/types';
 export function DashboardPage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
   const activities = useActivities();
   const tasks = useTasks();
   const focusSessions = useFocusSessions();
@@ -141,7 +143,7 @@ export function DashboardPage() {
       !current ? 'partial' : 
       current === 'partial' ? 'completed' : 
       current === 'completed' ? 'incomplete' : 
-      current === 'incomplete' ? undefined : 
+      current === 'incomplete' ? 'partial' : 
       undefined;
     try {
       await updateActivityStatusAndSync(todayStr, activityId, next);
@@ -173,7 +175,7 @@ export function DashboardPage() {
       {/* Greeting — always show */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-ink dark:text-slate-100">
-          {getGreeting()}!
+          {getGreeting(user?.name)}
         </h1>
         <p className="text-sm text-ink-muted dark:text-slate-400 mt-1">
           {formatDate(new Date())}

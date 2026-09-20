@@ -72,12 +72,15 @@ export function getDayNumber(date: string | Date): number {
   return d.getDate();
 }
 
-export function getGreeting(): string {
+export function getGreeting(username?: string): string {
   const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  if (h < 21) return 'Good evening';
-  return 'Good night';
+  const name = username || '';
+  const suffix = name ? `, ${name}! ` : ' ';
+  
+  if (h >= 5 && h < 12) return `Good Morning${suffix}🌅`;
+  if (h >= 12 && h < 17) return `Good Afternoon${suffix}☀️`;
+  if (h >= 17 && h < 21) return `Good Evening${suffix}🌆`;
+  return `Hope you're having a peaceful night${suffix}🌙`;
 }
 
 export function formatDuration(minutes: number): string {

@@ -122,7 +122,7 @@ export function ActivityTrackerPage() {
       !storedStatus ? 'partial' : 
       storedStatus === 'partial' ? 'completed' : 
       storedStatus === 'completed' ? 'incomplete' : 
-      storedStatus === 'incomplete' ? undefined : 
+      storedStatus === 'incomplete' ? 'partial' : 
       undefined;
 
     try {
