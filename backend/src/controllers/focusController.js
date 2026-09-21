@@ -16,21 +16,32 @@ export const getSessions = async (req, res, next) => {
 // @route   POST /api/focus/sessions
 export const createSession = async (req, res, next) => {
   try {
-    const { startTime, endTime, duration, type, activityId, taskId } = req.body;
+    const { startTime, endTime, duration, type, activityId, taskId, date } = req.body;
     
-    // Determine date from endTime (or startTime if not provided)
-    const refDate = endTime ? new Date(endTime) : (startTime ? new Date(startTime) : new Date());
-    const date = toISODate(refDate);
+    // Determine date: use provided local date, or extract from endTime (now in local timezone)
+    let sessionDate;
+    if (date) {
+      // Frontend provided the local date explicitly
+      sessionDate = date;
+    } else {
+      // Fallback to computing from timestamps (will still be UTC — use provided date when possible)
+      const refDate = endTime ? new Date(endTime) : (startTime ? new Date(startTime) : new Date());
+      sessionDate = toISODate(refDate);
+    }
+
+    // Set wasLinked to false only if neither activityId nor taskId is provided
+    const wasLinked = !!(activityId || taskId);
 
     const session = new FocusSession({
       userId: req.user._id,
-      date,
-      startTime: startTime || new Date(refDate.getTime() - duration * 60 * 1000),
-      endTime: endTime || refDate,
+      date: sessionDate,
+      startTime: startTime || new Date(new Date(endTime || new Date()).getTime() - duration * 60 * 1000),
+      endTime: endTime || new Date(),
       duration,
       type,
       activityId,
-      taskId
+      taskId,
+      wasLinked
     });
 
     const createdSession = await session.save();

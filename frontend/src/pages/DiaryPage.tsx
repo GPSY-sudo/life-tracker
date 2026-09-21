@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/useToast';
 import { diaryService } from '@/services/diaryService';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ActivityStatusIcon } from '@/components/ActivityStatusIcon';
-import { todayISO, formatDate, addDays, getDayName, formatDuration, formatTimeFromDate, isDateApplicable } from '@/utils/date';
+import { todayISO, formatDate, addDays, getDayName, formatDuration, formatSessionDuration, formatTimeFromDate, isDateApplicable } from '@/utils/date';
 
 export function DiaryPage() {
   const toast = useToast();
@@ -18,6 +18,7 @@ export function DiaryPage() {
 
   const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || todayISO());
   const [diaryText, setDiaryText] = useState('');
+  const [diaryMood, setDiaryMood] = useState<'great' | 'good' | 'okay' | 'not_great' | 'bad' | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,9 +44,10 @@ export function DiaryPage() {
     setLoading(true);
     setError(null);
     diaryService.getDiary(selectedDate)
-      .then((text) => {
+      .then((data) => {
         if (active) {
-          setDiaryText(text);
+          setDiaryText(data.note);
+          setDiaryMood(data.mood);
           setLoading(false);
         }
       })
@@ -107,7 +109,7 @@ export function DiaryPage() {
 
   const handleSave = async () => {
     try {
-      await updateDiaryNoteAndSync(selectedDate, diaryText);
+      await updateDiaryNoteAndSync(selectedDate, diaryText, diaryMood);
       toast('Diary saved', 'success');
     } catch (err) {
       toast('Failed to save diary', 'error');
@@ -163,6 +165,31 @@ export function DiaryPage() {
               </div>
             ) : (
               <>
+                <div className="mb-4">
+                  <p className="text-sm font-medium text-ink dark:text-slate-200 mb-2">How was your day?</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {[
+                      { value: 'great', emoji: '😄', label: 'Great' },
+                      { value: 'good', emoji: '🙂', label: 'Good' },
+                      { value: 'okay', emoji: '😐', label: 'Okay' },
+                      { value: 'not_great', emoji: '😕', label: 'Not Great' },
+                      { value: 'bad', emoji: '😞', label: 'Bad' },
+                    ].map(({ value, emoji, label }) => (
+                      <button
+                        key={value}
+                        onClick={() => setDiaryMood(diaryMood === value ? undefined : (value as any))}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          diaryMood === value
+                            ? 'bg-primary text-white'
+                            : 'bg-slate-100 dark:bg-slate-700 text-ink-muted dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                        }`}
+                      >
+                        {emoji} {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-ink-muted dark:text-slate-500">Mood is optional — you can leave it unselected.</p>
+                </div>
                 <textarea
                   className="input min-h-[200px] resize-y text-sm leading-relaxed"
                   value={diaryText}
@@ -244,12 +271,12 @@ export function DiaryPage() {
                         <span className="text-ink dark:text-slate-200 flex-1">
                           {tasks.find((t) => t.id === s.taskId)?.title ?? activities.find((a) => a.id === s.activityId)?.name ?? 'Free focus'}
                         </span>
-                        <span className="text-ink-muted dark:text-slate-400">{s.duration} min</span>
+                        <span className="text-ink-muted dark:text-slate-400">{formatSessionDuration(s.duration)}</span>
                       </div>
                     ))}
                     <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700">
                       <span className="text-sm font-medium text-ink dark:text-slate-200">
-                        Total: {formatDuration(dayFocusSessions.reduce((s, x) => s + x.duration, 0))}
+                        Total: {formatSessionDuration(dayFocusSessions.reduce((s, x) => s + x.duration, 0))}
                       </span>
                     </div>
                   </div>

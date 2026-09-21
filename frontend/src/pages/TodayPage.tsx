@@ -20,7 +20,7 @@ import { diaryService } from '@/services/diaryService';
 import { ActivityStatusIcon } from '@/components/ActivityStatusIcon';
 import { PriorityBadge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { todayISO, formatDate, addDays, getDayName, formatDuration, toISODate, isDateApplicable } from '@/utils/date';
+import { todayISO, formatDate, addDays, getDayName, formatDuration, formatSessionDuration, toISODate, isDateApplicable } from '@/utils/date';
 import type { ActivityStatus } from '@/types';
 
 export function TodayPage() {
@@ -314,7 +314,7 @@ export function TodayPage() {
                 {dayFocusSessions.length} Pomodoros
               </p>
               <p className="text-sm text-ink-muted dark:text-slate-400">
-                {formatDuration(focusMinutes)} focused
+                {formatSessionDuration(focusMinutes)} focused
               </p>
             </div>
           </div>

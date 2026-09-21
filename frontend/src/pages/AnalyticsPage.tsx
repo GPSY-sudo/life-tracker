@@ -9,8 +9,8 @@ import { analyticsService } from '@/services/analyticsService';
 import { useActivities, useTasks, useFocusSessions, useAllDailyRecords, loadFocusSessionsFromAPI, loadActivitiesFromAPI, loadTasksFromAPI } from '@/hooks/useAppData';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { formatMonthYear, getMonthName, formatDuration, todayISO, toISODate, parseISODate, isDateApplicable } from '@/utils/date';
-import type { MonthlyAnalytics, FocusAnalytics, ActivityAnalytics, TaskAnalytics, DiaryAnalytics } from '@/types';
+import { formatMonthYear, getMonthName, formatDuration, formatSessionDuration, todayISO, toISODate, parseISODate, isDateApplicable, formatDate } from '@/utils/date';
+import type { MonthlyAnalytics, FocusAnalytics, ActivityAnalytics, TaskAnalytics, DiaryAnalytics, DailyRecord } from '@/types';
 
 type Tab = 'overview' | 'trends' | 'activities' | 'tasks' | 'focus' | 'diary' | 'calendar' | 'review';
 
@@ -34,6 +34,8 @@ export function AnalyticsPage() {
   const [month, setMonth] = useState(now.getMonth());
   const [analytics, setAnalytics] = useState<MonthlyAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const dailyRecords = useAllDailyRecords();
 
   useEffect(() => {
     let active = true;
@@ -108,7 +110,7 @@ export function AnalyticsPage() {
           {tab === 'activities' && <ActivitiesTab analytics={analytics} />}
           {tab === 'tasks' && <TasksTab analytics={analytics} />}
           {tab === 'focus' && <FocusTab analytics={analytics} />}
-          {tab === 'diary' && <DiaryTab analytics={analytics} />}
+          {tab === 'diary' && <DiaryTab analytics={analytics} dailyRecords={dailyRecords} year={year} month={month} />}
           {tab === 'calendar' && <CalendarTab year={year} month={month} />}
           {tab === 'review' && <ReviewTab analytics={analytics} year={year} month={month} />}
         </>
@@ -211,7 +213,7 @@ function TrendsTab({ analytics, year }: { analytics: MonthlyAnalytics; year: num
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
             <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="#94a3b8" />
             <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" label={{ value: 'Focus (min)', angle: -90, position: 'insideLeft' }} />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} formatter={(value: any) => `${value} min`} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} formatter={(value: any) => formatSessionDuration(value)} />
             <Bar dataKey="focus" fill="#22C55E" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -380,13 +382,66 @@ function FocusTab({ analytics }: { analytics: MonthlyAnalytics }) {
   const fa = analytics.focusAnalytics;
   const activities = useActivities();
   const tasks = useTasks();
+  const focusSessions = useFocusSessions();
+
+  // Separate focus sessions into categories for byActivity/byTask breakdown
+  const sessionsByActivity = new Map<string, number>();
+  const sessionsByTask = new Map<string, number>();
+
+  focusSessions.forEach((session) => {
+    const date = session.date;
+    const [year, month, day] = date.split('-').map(Number);
+    const sessionDate = new Date(year, month - 1, day);
+    const analyticsDate = new Date(fa.dailyFocus[0]?.date?.split('-').map(Number) || []);
+    
+    // Only count sessions from the current analytics period (approximate match on month/year)
+    // This is a simplified check; in production you'd want to be more precise
+    if (session.type !== 'focus') return;
+
+    if (session.activityId) {
+      const activity = activities.find((a) => a.id === session.activityId);
+      const key = activity ? session.activityId : `__deleted_${session.activityId}`;
+      sessionsByActivity.set(key, (sessionsByActivity.get(key) || 0) + session.duration);
+    } else if (session.taskId) {
+      const task = tasks.find((t) => t.id === session.taskId);
+      const key = task ? session.taskId : `__deleted_${session.taskId}`;
+      sessionsByTask.set(key, (sessionsByTask.get(key) || 0) + session.duration);
+    }
+  });
 
   const byActivityData = Object.entries(fa.byActivity)
-    .map(([id, minutes]) => ({ name: activities.find((a) => a.id === id)?.name ?? 'Unknown', minutes }))
+    .map(([id, minutes]) => {
+      const activity = activities.find((a) => a.id === id);
+      let name = activity?.name;
+      
+      if (!activity) {
+        // Check if this was originally linked (has any session with wasLinked=true but no activity)
+        const wasLinked = focusSessions.some((s) => s.activityId === id && s.wasLinked !== false);
+        const hasFreeSession = focusSessions.some((s) => s.activityId === id && s.wasLinked === false);
+        
+        if (wasLinked && !activity) {
+          name = 'Unknown — Deleted';
+        } else if (!id || id === '' || id === 'undefined') {
+          name = 'Free Focus';
+        } else {
+          name = 'Unknown';
+        }
+      }
+      
+      return { name: name || 'Unknown', minutes };
+    })
     .reduce((acc, item) => {
-      // Group all "Unknown" entries into a single Unknown category
-      if (item.name === 'Unknown') {
-        const existing = acc.find((x) => x.name === 'Unknown');
+      // Group all "Unknown" entries into a single Unknown category (except "Unknown — Deleted")
+      if (item.name === 'Unknown' || item.name === 'Free Focus') {
+        const existing = acc.find((x) => x.name === item.name);
+        if (existing) {
+          existing.minutes += item.minutes;
+        } else {
+          acc.push(item);
+        }
+      } else if (item.name === 'Unknown — Deleted') {
+        // Keep "Unknown — Deleted" separate
+        const existing = acc.find((x) => x.name === 'Unknown — Deleted');
         if (existing) {
           existing.minutes += item.minutes;
         } else {
@@ -400,11 +455,37 @@ function FocusTab({ analytics }: { analytics: MonthlyAnalytics }) {
     .sort((a, b) => b.minutes - a.minutes);
 
   const byTaskData = Object.entries(fa.byTask)
-    .map(([id, minutes]) => ({ name: tasks.find((t) => t.id === id)?.title ?? 'Unknown', minutes }))
+    .map(([id, minutes]) => {
+      const task = tasks.find((t) => t.id === id);
+      let name = task?.title;
+      
+      if (!task) {
+        // Check if this was originally linked
+        const wasLinked = focusSessions.some((s) => s.taskId === id && s.wasLinked !== false);
+        
+        if (wasLinked && !task) {
+          name = 'Unknown — Deleted';
+        } else if (!id || id === '' || id === 'undefined') {
+          name = 'Free Focus';
+        } else {
+          name = 'Unknown';
+        }
+      }
+      
+      return { name: name || 'Unknown', minutes };
+    })
     .reduce((acc, item) => {
-      // Group all "Unknown" entries into a single Unknown category
-      if (item.name === 'Unknown') {
-        const existing = acc.find((x) => x.name === 'Unknown');
+      // Group all "Unknown" entries into a single Unknown category (except "Unknown — Deleted")
+      if (item.name === 'Unknown' || item.name === 'Free Focus') {
+        const existing = acc.find((x) => x.name === item.name);
+        if (existing) {
+          existing.minutes += item.minutes;
+        } else {
+          acc.push(item);
+        }
+      } else if (item.name === 'Unknown — Deleted') {
+        // Keep "Unknown — Deleted" separate
+        const existing = acc.find((x) => x.name === 'Unknown — Deleted');
         if (existing) {
           existing.minutes += item.minutes;
         } else {
@@ -426,15 +507,15 @@ function FocusTab({ analytics }: { analytics: MonthlyAnalytics }) {
         </div>
         <div className="card p-4">
           <p className="text-xs text-ink-muted dark:text-slate-400 mb-1">Total Focus</p>
-          <p className="text-2xl font-bold text-ink dark:text-slate-100">{formatDuration(fa.totalFocusTime)}</p>
+          <p className="text-2xl font-bold text-ink dark:text-slate-100">{formatSessionDuration(fa.totalFocusTime)}</p>
         </div>
         <div className="card p-4">
           <p className="text-xs text-ink-muted dark:text-slate-400 mb-1">This Week</p>
-          <p className="text-2xl font-bold text-ink dark:text-slate-100">{formatDuration(fa.focusThisWeek)}</p>
+          <p className="text-2xl font-bold text-ink dark:text-slate-100">{formatSessionDuration(fa.focusThisWeek)}</p>
         </div>
         <div className="card p-4">
           <p className="text-xs text-ink-muted dark:text-slate-400 mb-1">This Month</p>
-          <p className="text-2xl font-bold text-ink dark:text-slate-100">{formatDuration(fa.focusThisMonth)}</p>
+          <p className="text-2xl font-bold text-ink dark:text-slate-100">{formatSessionDuration(fa.focusThisMonth)}</p>
         </div>
       </div>
 
@@ -445,7 +526,7 @@ function FocusTab({ analytics }: { analytics: MonthlyAnalytics }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
             <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#94a3b8" />
             <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
-            <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '12px' }} />
+            <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '12px' }} formatter={(value: any) => formatSessionDuration(value)} />
             <Bar dataKey="minutes" fill="#3B82F6" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -461,12 +542,14 @@ function FocusTab({ analytics }: { analytics: MonthlyAnalytics }) {
                 <div className="flex-1">
                   <ProgressBar value={d.minutes} max={Math.max(...byActivityData.map((x) => x.minutes), 1)} color="primary" size="sm" />
                 </div>
-                <span className="text-sm font-medium text-ink-muted dark:text-slate-400 w-16 text-right">{formatDuration(d.minutes)}</span>
+                <span className="text-sm font-medium text-ink-muted dark:text-slate-400 w-16 text-right">{formatSessionDuration(d.minutes)}</span>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      <p className="text-xs text-ink-muted dark:text-slate-500 italic">Activity and Task breakdowns are separate views of the same focus sessions and should not be added together.</p>
 
       {byTaskData.length > 0 && (
         <div className="card p-5">
@@ -478,20 +561,112 @@ function FocusTab({ analytics }: { analytics: MonthlyAnalytics }) {
                 <div className="flex-1">
                   <ProgressBar value={d.minutes} max={Math.max(...byTaskData.map((x) => x.minutes), 1)} color="success" size="sm" />
                 </div>
-                <span className="text-sm font-medium text-ink-muted dark:text-slate-400 w-16 text-right">{formatDuration(d.minutes)}</span>
+                <span className="text-sm font-medium text-ink-muted dark:text-slate-400 w-16 text-right">{formatSessionDuration(d.minutes)}</span>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Legend explaining focus types */}
+      <div className="card p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+        <h4 className="text-xs font-semibold text-ink-muted dark:text-slate-400 mb-3 uppercase">Legend</h4>
+        <div className="space-y-2">
+          <div className="flex items-start gap-2">
+            <span className="text-xs font-medium text-ink-muted dark:text-slate-400 flex-shrink-0 pt-0.5">•</span>
+            <div>
+              <p className="text-xs font-medium text-ink dark:text-slate-200">Free Focus</p>
+              <p className="text-xs text-ink-muted dark:text-slate-400">Sessions started without a linked Activity or Task</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-xs font-medium text-warning dark:text-amber-400 flex-shrink-0 pt-0.5">•</span>
+            <div>
+              <p className="text-xs font-medium text-ink dark:text-slate-200">Unknown — Deleted</p>
+              <p className="text-xs text-ink-muted dark:text-slate-400">Sessions originally linked to an Activity or Task that was later deleted</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-function DiaryTab({ analytics }: { analytics: MonthlyAnalytics }) {
+function DiaryTab({ analytics, dailyRecords, year, month }: { analytics: MonthlyAnalytics; dailyRecords: Record<string, DailyRecord>; year: number; month: number }) {
   const da = analytics.diaryAnalytics;
+  const now = new Date();
+  
+  // Calculate diary metrics from dailyRecords
+  const monthDateStrings = useMemo(() => {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const dates: string[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      dates.push(dateStr);
+    }
+    return dates;
+  }, [year, month]);
+
+  // Get diary entries for this month only
+  const diaryEntriesThisMonth = useMemo(() => {
+    const entries: Array<{ date: string; text: string; wordCount: number }> = [];
+    const todayStr = toISODate(now);
+    
+    for (const dateStr of monthDateStrings) {
+      // Skip future dates
+      if (dateStr > todayStr) continue;
+      
+      const record = dailyRecords[dateStr];
+      if (record && record.diaryNote.trim().length > 0) {
+        const wordCount = record.diaryNote.trim().split(/\s+/).length;
+        entries.push({
+          date: dateStr,
+          text: record.diaryNote,
+          wordCount,
+        });
+      }
+    }
+    return entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [monthDateStrings, dailyRecords, now]);
+
+  // Calculate derived metrics
+  const totalWords = useMemo(() => diaryEntriesThisMonth.reduce((sum, e) => sum + e.wordCount, 0), [diaryEntriesThisMonth]);
+  const avgWordsPerEntry = diaryEntriesThisMonth.length > 0 ? Math.round(totalWords / diaryEntriesThisMonth.length) : 0;
+  const longestEntry = diaryEntriesThisMonth.length > 0 ? Math.max(...diaryEntriesThisMonth.map(e => e.wordCount)) : 0;
+  
+  // Calculate writing consistency (days with entries / elapsed days, excluding future dates)
+  const today = now.getDate();
+  const monthHasStarted = now.getFullYear() > year || (now.getFullYear() === year && now.getMonth() > month);
+  const elapsedDays = monthHasStarted ? new Date(year, month + 1, 0).getDate() : today;
+  const consistencyPercentage = elapsedDays > 0 ? Math.round((diaryEntriesThisMonth.length / elapsedDays) * 100) : 0;
+
+  // Dates with diary entries for calendar visualization
+  const datesWithEntries = useMemo(() => new Set(diaryEntriesThisMonth.map(e => e.date)), [diaryEntriesThisMonth]);
+
+  // Calendar grid
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days: (string | null)[] = [];
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      days.push(dateStr);
+    }
+    return days;
+  }, [year, month]);
+
+  const todayStr = toISODate(now);
+  const hasDiaryEntry = (dateStr: string) => datesWithEntries.has(dateStr);
+  const isToday = (dateStr: string) => dateStr === todayStr;
+  const isFuture = (dateStr: string) => dateStr > todayStr;
+
+  // Recent entries (limit to 5)
+  const recentEntries = diaryEntriesThisMonth.slice(0, 5);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -514,6 +689,133 @@ function DiaryTab({ analytics }: { analytics: MonthlyAnalytics }) {
           </div>
           <p className="text-2xl font-bold text-ink dark:text-slate-100">{da.monthlyCount}</p>
         </div>
+      </div>
+
+      {/* Word metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card p-4">
+          <p className="text-xs font-medium text-ink-muted dark:text-slate-400 mb-1">Total Words</p>
+          <p className="text-2xl font-bold text-ink dark:text-slate-100">{totalWords.toLocaleString()}</p>
+        </div>
+        <div className="card p-4">
+          <p className="text-xs font-medium text-ink-muted dark:text-slate-400 mb-1">Average Words / Entry</p>
+          <p className="text-2xl font-bold text-ink dark:text-slate-100">{avgWordsPerEntry}</p>
+        </div>
+        <div className="card p-4">
+          <p className="text-xs font-medium text-ink-muted dark:text-slate-400 mb-1">Longest Entry</p>
+          <p className="text-2xl font-bold text-ink dark:text-slate-100">{longestEntry} words</p>
+        </div>
+      </div>
+
+      {/* Writing consistency */}
+      <div className="card p-5">
+        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-3">Writing Consistency</h3>
+        <p className="text-lg font-bold text-ink dark:text-slate-100 mb-1">{diaryEntriesThisMonth.length} of {elapsedDays} days</p>
+        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-2">
+          <div className="bg-primary dark:bg-primary-400 h-2 rounded-full" style={{ width: `${consistencyPercentage}%` }} />
+        </div>
+        <p className="text-xs text-ink-muted dark:text-slate-400">{consistencyPercentage}% of elapsed days in {getMonthName(month)}</p>
+      </div>
+
+      {/* Diary Activity Calendar */}
+      <div className="card p-5">
+        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Diary Activity</h3>
+        {diaryEntriesThisMonth.length === 0 ? (
+          <p className="text-xs text-ink-muted dark:text-slate-400">No diary entries recorded for this month.</p>
+        ) : (
+          <div className="grid grid-cols-7 gap-1">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+              <div key={day} className="text-center text-xs font-medium text-ink-muted dark:text-slate-500 py-1">
+                {day}
+              </div>
+            ))}
+            {calendarDays.map((dateStr, i) => {
+              if (!dateStr) return <div key={`empty-${i}`} className="aspect-square" />;
+              const day = parseInt(dateStr.split('-')[2]);
+              const hasEntry = hasDiaryEntry(dateStr);
+              const today = isToday(dateStr);
+              const future = isFuture(dateStr);
+              return (
+                <div
+                  key={dateStr}
+                  className={`aspect-square flex items-center justify-center rounded text-xs font-medium cursor-default transition-colors ${
+                    future ? 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-600' :
+                    today ? 'bg-primary text-white ring-2 ring-primary' :
+                    hasEntry ? 'bg-success text-white' :
+                    'bg-slate-100 dark:bg-slate-700 text-ink-muted dark:text-slate-400'
+                  }`}
+                  title={hasEntry ? `Entry on ${dateStr}` : `No entry on ${dateStr}`}
+                >
+                  {day}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Recent Entries */}
+      <div className="card p-5">
+        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Recent Entries</h3>
+        {recentEntries.length === 0 ? (
+          <p className="text-xs text-ink-muted dark:text-slate-400">No entries to display.</p>
+        ) : (
+          <div className="space-y-3">
+            {recentEntries.map((entry) => (
+              <div key={entry.date} className="border-l-2 border-primary dark:border-primary-400 pl-3">
+                <p className="text-xs font-medium text-ink-muted dark:text-slate-400">{formatDate(entry.date)}</p>
+                <p className="text-sm text-ink dark:text-slate-200 line-clamp-2 mt-1">{entry.text}</p>
+                <p className="text-xs text-ink-muted dark:text-slate-500 mt-1">{entry.wordCount} words</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Mood Summary */}
+      <div className="card p-5">
+        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Mood Summary</h3>
+        {diaryEntriesThisMonth.length === 0 ? (
+          <p className="text-xs text-ink-muted dark:text-slate-400">No diary entries this month.</p>
+        ) : (() => {
+          const moodCounts = {
+            great: diaryEntriesThisMonth.filter(e => dailyRecords[e.date]?.mood === 'great').length,
+            good: diaryEntriesThisMonth.filter(e => dailyRecords[e.date]?.mood === 'good').length,
+            okay: diaryEntriesThisMonth.filter(e => dailyRecords[e.date]?.mood === 'okay').length,
+            not_great: diaryEntriesThisMonth.filter(e => dailyRecords[e.date]?.mood === 'not_great').length,
+            bad: diaryEntriesThisMonth.filter(e => dailyRecords[e.date]?.mood === 'bad').length,
+          };
+          const moodsRecorded = Object.values(moodCounts).reduce((a, b) => a + b, 0);
+          const totalEntries = diaryEntriesThisMonth.length;
+          
+          if (moodsRecorded === 0) {
+            return <p className="text-xs text-ink-muted dark:text-slate-400">No moods recorded this month.</p>;
+          }
+          
+          return (
+            <div>
+              <div className="space-y-2 mb-3">
+                {[
+                  { emoji: '😄', label: 'Great', count: moodCounts.great },
+                  { emoji: '🙂', label: 'Good', count: moodCounts.good },
+                  { emoji: '😐', label: 'Okay', count: moodCounts.okay },
+                  { emoji: '😕', label: 'Not Great', count: moodCounts.not_great },
+                  { emoji: '😞', label: 'Bad', count: moodCounts.bad },
+                ].map(({ emoji, label, count }) => (
+                  count > 0 && (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <span className="text-ink dark:text-slate-200">{emoji} {label}</span>
+                      <span className="font-medium text-ink-muted dark:text-slate-400">{count}</span>
+                    </div>
+                  )
+                ))}
+              </div>
+              <p className="text-xs text-ink-muted dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-2">
+                Mood recorded on {moodsRecorded} of {totalEntries} diary-entry days
+              </p>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -644,7 +946,7 @@ function ReviewTab({ analytics, year, month }: { analytics: MonthlyAnalytics; ye
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <ReviewStat label="Overall Score" value={`${analytics.overallCompletion}%`} />
           <ReviewStat label="Activity Score" value={`${analytics.overallCompletion}%`} />
-          <ReviewStat label="Focus Time" value={formatDuration(analytics.focusAnalytics.focusThisMonth)} />
+          <ReviewStat label="Focus Time" value={formatSessionDuration(analytics.focusAnalytics.focusThisMonth)} />
           <ReviewStat label="Pomodoros" value={`${analytics.focusAnalytics.totalPomodoros}`} />
           <ReviewStat label="Diary Days" value={`${analytics.diaryAnalytics.daysWithEntries}`} />
           <ReviewStat label="Perfect Days" value={`${analytics.fullyCompletedDays}`} />

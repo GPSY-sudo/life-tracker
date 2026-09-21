@@ -32,9 +32,13 @@ export const focusService = {
     const now = data.endTime ? new Date(data.endTime) : new Date();
     const start = data.startTime ? new Date(data.startTime) : new Date(now.getTime() - data.duration * 60 * 1000);
     
+    // Compute date in local timezone (not UTC) to match frontend's date representation
+    const endDate = toISODate(now);
+    
     const payload = {
       type: data.type,
       duration: data.duration,
+      date: endDate, // Include explicit local date to prevent UTC shift
       startTime: start.toISOString(),
       endTime: now.toISOString(),
       ...(data.activityId && { activityId: data.activityId }),
@@ -44,6 +48,34 @@ export const focusService = {
     return apiFetch<FocusSession>('/focus/sessions', {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  },
+
+  async updateTaskStatus(taskId: string, status: 'in_progress' | 'todo' | 'completed' | 'blocked'): Promise<void> {
+    await apiFetch(`/tasks/${taskId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  async updateActivityStatus(activityId: string, date: string, status: 'partial' | 'completed' | 'incomplete'): Promise<void> {
+    // First check current status to prevent downgrading from completed
+    try {
+      const response = await apiFetch<any>(`/days/${date}`);
+      const currentStatus = response.activities?.[activityId];
+      
+      // Don't downgrade from 'completed' status
+      if (currentStatus === 'completed' && status !== 'completed') {
+        console.log(`Activity ${activityId} already marked completed for ${date}, not downgrading to ${status}`);
+        return;
+      }
+    } catch (error) {
+      console.error('Failed to check current activity status:', error);
+    }
+    
+    await apiFetch(`/days/${date}/activity/${activityId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
     });
   },
 

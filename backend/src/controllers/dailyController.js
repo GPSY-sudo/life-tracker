@@ -50,7 +50,8 @@ export const getDay = async (req, res, next) => {
         id: `day-${date}`,
         date,
         activities: {},
-        diaryNote: ''
+        diaryNote: '',
+        mood: null
       });
     }
   } catch (error) {
@@ -90,14 +91,21 @@ export const updateActivityStatus = async (req, res, next) => {
 export const updateDiary = async (req, res, next) => {
   try {
     const date = toISODate(req.params.date);
-    const { diaryNote } = req.body;
+    const { diaryNote, mood } = req.body;
 
     let record = await DailyRecord.findOne({ userId: req.user._id, date });
     
     if (!record) {
-      record = new DailyRecord({ userId: req.user._id, date, activities: {}, diaryNote: diaryNote || '' });
+      record = new DailyRecord({ 
+        userId: req.user._id, 
+        date, 
+        activities: {}, 
+        diaryNote: diaryNote || '',
+        mood: mood || null
+      });
     } else {
       record.diaryNote = diaryNote || '';
+      record.mood = mood || null;
     }
 
     const updatedRecord = await record.save();

@@ -25,7 +25,7 @@ import { TaskForm } from '@/components/TaskForm';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PriorityBadge } from '@/components/ui/Badge';
 import { activityService } from '@/services/activityService';
-import { todayISO, getGreeting, formatDate, formatDuration, isDateApplicable } from '@/utils/date';
+import { todayISO, getGreeting, formatDate, formatDuration, formatSessionDuration, isDateApplicable } from '@/utils/date';
 import type { ActivityStatus } from '@/types';
 
 export function DashboardPage() {
@@ -335,7 +335,7 @@ export function DashboardPage() {
                 {todayFocusSessions.length} Pomodoros
               </p>
               <p className="text-xs text-ink-muted dark:text-slate-400">
-                {formatDuration(focusMinutes)} focused
+                {formatSessionDuration(focusMinutes)} focused
               </p>
             </div>
 

@@ -55,6 +55,7 @@ export interface DailyRecord {
   date: string; // YYYY-MM-DD
   activities: Record<string, ActivityStatus>; // activityId -> status
   diaryNote: string;
+  mood?: 'great' | 'good' | 'okay' | 'not_great' | 'bad'; // optional daily mood
   // Optional: absent in the backend's lazy stub when no DB row exists yet
   createdAt?: string;
   updatedAt?: string;
@@ -91,6 +92,7 @@ export interface FocusSession {
   type: FocusSessionType;
   activityId?: string;
   taskId?: string;
+  wasLinked?: boolean; // true if originally linked to Activity/Task, false if Free Focus
 }
 
 // ============================================================

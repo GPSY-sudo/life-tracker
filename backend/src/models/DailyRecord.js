@@ -8,7 +8,8 @@ const dailyRecordSchema = new mongoose.Schema({
     of: { type: String, enum: ['partial', 'completed', 'incomplete'] },
     default: {}
   },
-  diaryNote: { type: String, default: '' }
+  diaryNote: { type: String, default: '' },
+  mood: { type: String, enum: ['great', 'good', 'okay', 'not_great', 'bad'], default: null }
 }, {
   timestamps: true,
   toJSON: {

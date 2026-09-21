@@ -1,4 +1,4 @@
-# Life Tracker
+      # Life Tracker
 
 A personal productivity and life tracking application designed to help track daily activities, tasks, focused work, and personal reflections in one place.
 

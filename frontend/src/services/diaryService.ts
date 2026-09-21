@@ -4,23 +4,26 @@ import type { DailyRecord } from '@/types';
 export const diaryService = {
   /**
    * GET /api/days/:date
-   * Fetch the daily record (including diary note) for a specific date.
+   * Fetch the daily record (including diary note and mood) for a specific date.
    * Returns a lazy stub if no record exists in DB.
    */
-  async getDiary(date: string): Promise<string> {
+  async getDiary(date: string): Promise<{ note: string; mood?: string }> {
     const record = await apiFetch<DailyRecord>(`/days/${date}`);
-    return record.diaryNote ?? '';
+    return {
+      note: record.diaryNote ?? '',
+      mood: record.mood,
+    };
   },
 
   /**
    * PUT /api/days/:date/diary
-   * Save a diary note for a specific date.
+   * Save a diary note and optional mood for a specific date.
    * Backend creates the DailyRecord if needed, preserving existing activity statuses.
    */
-  async saveDiary(date: string, note: string): Promise<DailyRecord> {
+  async saveDiary(date: string, note: string, mood?: string): Promise<DailyRecord> {
     return apiFetch<DailyRecord>(`/days/${date}/diary`, {
       method: 'PUT',
-      body: JSON.stringify({ diaryNote: note }),
+      body: JSON.stringify({ diaryNote: note, mood: mood || null }),
     });
   },
 

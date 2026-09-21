@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/useToast';
 import { taskService } from '@/services/taskService';
 import { TaskForm } from '@/components/TaskForm';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { PriorityBadge, StatusBadge } from '@/components/ui/Badge';
+import { PriorityBadge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { todayISO, formatShortDate } from '@/utils/date';
 import type { Task, TaskStatus, TaskPriority } from '@/types';
@@ -266,7 +266,6 @@ export function TaskListView({ onEditTask, onAddTask, onStartFocus }: TaskListVi
 
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       <PriorityBadge priority={task.priority} />
-                      {task.status !== 'completed' && <StatusBadge status={task.status} />}
                       {task.dueDate && (
                         <span className={`flex items-center gap-1 text-xs ${
                           isOverdue ? 'text-danger-text dark:text-red-400' : isToday ? 'text-warning-text dark:text-amber-400' : 'text-ink-muted dark:text-slate-400'

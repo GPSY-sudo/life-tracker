@@ -125,9 +125,9 @@ export async function updateActivityStatusAndSync(
  * Sync the result back into the local state and store.
  * Preserves existing activity statuses.
  */
-export async function updateDiaryNoteAndSync(date: string, note: string): Promise<DailyRecord> {
+export async function updateDiaryNoteAndSync(date: string, note: string, mood?: string): Promise<DailyRecord> {
   try {
-    const updated = await diaryService.saveDiary(date, note);
+    const updated = await diaryService.saveDiary(date, note, mood);
     // Create a new reference to trigger useSyncExternalStore updates
     apiDailyRecords = { ...apiDailyRecords, [date]: updated };
     store.dailyRecords[date] = updated;

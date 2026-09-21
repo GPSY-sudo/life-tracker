@@ -2,11 +2,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Play, Pause, RotateCcw, SkipForward, Clock, Target, ListChecks, Volume2, VolumeX, Music } from 'lucide-react';
 import { usePomodoro } from '@/hooks/usePomodoro';
-import { useActivities, useTasks, useFocusSessions, useSettings, loadFocusSessionsFromAPI, loadActivitiesFromAPI, loadTasksFromAPI, useSoundPresets, updateSoundPreferences } from '@/hooks/useAppData';
+import { useActivities, useTasks, useFocusSessions, useSettings, loadFocusSessionsFromAPI, loadActivitiesFromAPI, loadTasksFromAPI, useSoundPresets, updateSoundPreferences, syncFocusSessionToState } from '@/hooks/useAppData';
 import { SoundMixer } from '@/components/SoundMixer';
 import { audioService } from '@/services/audioService';
+import { focusService } from '@/services/focusService';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { formatTime, formatDuration, todayISO, formatTimeFromDate } from '@/utils/date';
+import { formatTime, formatDuration, formatSessionDuration, todayISO, formatTimeFromDate } from '@/utils/date';
 import type { PomodoroMode, SoundId } from '@/types';
 
 export function FocusPage() {
@@ -18,6 +19,44 @@ export function FocusPage() {
 
   const [focusActivityId, setFocusActivityId] = useState<string>('');
   const [focusTaskId, setFocusTaskId] = useState<string>('');
+
+  // Get tasks related to the selected activity
+  const getTasksForActivity = (activityId: string) => {
+    if (!activityId) return [];
+    return tasks.filter((t) => t.activityId === activityId && t.status !== 'completed');
+  };
+
+  // Handle activity selection - Rule 1
+  const handleActivityChange = (newActivityId: string) => {
+    setFocusActivityId(newActivityId);
+    // If a task is selected from a different activity, clear it
+    if (newActivityId && focusTaskId) {
+      const selectedTask = tasks.find((t) => t.id === focusTaskId);
+      if (selectedTask && selectedTask.activityId !== newActivityId) {
+        setFocusTaskId('');
+      }
+    }
+  };
+
+  // Handle task selection - Rule 2 & 3
+  const handleTaskChange = (newTaskId: string) => {
+    if (!newTaskId) {
+      setFocusTaskId('');
+      return;
+    }
+    
+    const selectedTask = tasks.find((t) => t.id === newTaskId);
+    if (selectedTask) {
+      // Auto-set activity to task's activity (or clear if task has no activity)
+      setFocusActivityId(selectedTask.activityId || '');
+      setFocusTaskId(newTaskId);
+    }
+  };
+
+  // Determine available tasks based on current activity or all pending tasks
+  const availableTasks = focusActivityId 
+    ? getTasksForActivity(focusActivityId)
+    : tasks.filter((t) => t.status !== 'completed');
   
   // Subscribe to audioService state changes - forces re-render when audio state changes
   const [, setAudioStateVersion] = useState(0);
@@ -129,6 +168,15 @@ export function FocusPage() {
 
   const pomodoro = usePomodoro(focusTarget);
 
+  // Navigation cleanup: preserve active timer state, do NOT save session
+  useEffect(() => {
+    return () => {
+      // On unmount: do NOT save a FocusSession
+      // The timer is persisted in global store and will be restored on return
+      // No session should be created just because user navigated away
+    };
+  }, []);
+
   const pendingTasks = tasks.filter((t) => t.status !== 'completed');
 
   return (
@@ -190,13 +238,17 @@ export function FocusPage() {
 
           {/* Controls */}
           <div className="flex items-center gap-3">
-            {!pomodoro.isRunning ? (
-              <button onClick={pomodoro.start} className="btn-primary px-8 py-3">
-                <Play className="w-5 h-5" /> Start
-              </button>
-            ) : (
+            {pomodoro.isRunning ? (
               <button onClick={pomodoro.pause} className="btn-primary px-8 py-3">
                 <Pause className="w-5 h-5" /> Pause
+              </button>
+            ) : pomodoro.isPaused ? (
+              <button onClick={pomodoro.start} className="btn-primary px-8 py-3">
+                <Play className="w-5 h-5" /> Resume
+              </button>
+            ) : (
+              <button onClick={pomodoro.start} className="btn-primary px-8 py-3">
+                <Play className="w-5 h-5" /> Start
               </button>
             )}
             <button onClick={pomodoro.reset} className="btn-ghost px-4 py-3" aria-label="Reset timer">
@@ -216,14 +268,27 @@ export function FocusPage() {
               <Target className="w-5 h-5 text-primary dark:text-primary-300" />
               <h3 className="text-base font-semibold text-ink dark:text-slate-200">Focus Target</h3>
             </div>
+
+            {/* Guidance Box */}
+            <div className="mb-4 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+              <p className="text-xs leading-relaxed text-ink-muted dark:text-slate-400">
+                <span className="font-medium">💡 Focus linking rules:</span>
+                <br />• Select an Activity to see its related Tasks<br />
+                • Select a Task to auto-set its Activity<br />
+                • Both can be selected when related<br />
+                • Select neither for Free Focus
+              </p>
+            </div>
+
             <div className="space-y-3">
               <div>
                 <label className="label" htmlFor="focus-activity">Activity (optional)</label>
                 <select
                   id="focus-activity"
                   className="input"
+                  disabled={pomodoro.isRunning}
                   value={focusActivityId}
-                  onChange={(e) => setFocusActivityId(e.target.value)}
+                  onChange={(e) => handleActivityChange(e.target.value)}
                 >
                   <option value="">None</option>
                   {activities.map((a) => (
@@ -236,11 +301,12 @@ export function FocusPage() {
                 <select
                   id="focus-task"
                   className="input"
+                  disabled={pomodoro.isRunning}
                   value={focusTaskId}
-                  onChange={(e) => setFocusTaskId(e.target.value)}
+                  onChange={(e) => handleTaskChange(e.target.value)}
                 >
                   <option value="">None</option>
-                  {pendingTasks.map((t) => (
+                  {availableTasks.map((t) => (
                     <option key={t.id} value={t.id}>{t.title}</option>
                   ))}
                 </select>
@@ -256,7 +322,8 @@ export function FocusPage() {
             )}
           </div>
 
-          {/* Sound Controller Card */}
+          {/* Sound Controller Card - Hidden in V1, will be integrated with Moodist in V2 */}
+          {false && (
           <div className="card p-5">
             {/* Row 1: Quick Controls */}
             <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
@@ -320,6 +387,7 @@ export function FocusPage() {
               <span className="text-xs text-ink-muted dark:text-slate-400 min-w-max">{audioService.getMasterVolume()}%</span>
             </div>
           </div>
+          )}
 
           {/* Today's Stats */}
           <div className="card p-5">
@@ -333,7 +401,7 @@ export function FocusPage() {
                 <p className="text-xs text-ink-muted dark:text-slate-400">Pomodoros</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-ink dark:text-slate-100">{formatDuration(todayMinutes)}</p>
+                <p className="text-2xl font-bold text-ink dark:text-slate-100">{formatSessionDuration(todayMinutes)}</p>
                 <p className="text-xs text-ink-muted dark:text-slate-400">Focused</p>
               </div>
             </div>
@@ -349,7 +417,7 @@ export function FocusPage() {
                       <span className="text-ink dark:text-slate-200 flex-1 truncate">
                         {getTaskTitle(s.taskId) ?? getActivityName(s.activityId) ?? 'Free focus'}
                       </span>
-                      <span className="text-ink-muted dark:text-slate-400">{s.duration} min</span>
+                      <span className="text-ink-muted dark:text-slate-400">{formatSessionDuration(s.duration)}</span>
                     </div>
                   ))}
                 </div>

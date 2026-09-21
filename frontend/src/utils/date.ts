@@ -91,6 +91,32 @@ export function formatDuration(minutes: number): string {
   return `${m}m`;
 }
 
+export function formatSessionDuration(minutes: number): string {
+  // Format focus session duration as human-readable string
+  // Handles fractional minutes for short focus sessions (< 1 minute)
+  
+  if (minutes < 0.0167) {
+    // Less than 1 second, shouldn't happen but handle gracefully
+    return '0s';
+  }
+  
+  if (minutes < 1) {
+    // Convert to seconds
+    const seconds = Math.round(minutes * 60);
+    return `${seconds}s`;
+  }
+  
+  // 1 minute or more: show minutes and seconds
+  const wholeMinutes = Math.floor(minutes);
+  const remainingSeconds = Math.round((minutes - wholeMinutes) * 60);
+  
+  if (remainingSeconds === 0) {
+    return `${wholeMinutes}m`;
+  }
+  
+  return `${wholeMinutes}m ${remainingSeconds}s`;
+}
+
 export function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
