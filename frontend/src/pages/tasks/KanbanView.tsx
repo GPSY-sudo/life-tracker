@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Plus, Pencil, Trash2, Calendar, AlertCircle, Play, GripVertical } from 'lucide-react';
-import { useTasks, useActivities } from '@/hooks/useAppData';
+import { useTasks, useActivities, syncTaskToState } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/useToast';
 import { taskService } from '@/services/taskService';
 import { PriorityBadge } from '@/components/ui/Badge';
@@ -77,16 +77,28 @@ export function KanbanView({ onEditTask, onAddTask, onStartFocus }: KanbanViewPr
     if (!draggedId) return;
     const task = tasks.find((t) => t.id === draggedId);
     if (task && task.status !== status) {
-      await taskService.setStatus(draggedId, status);
-      toast(`Moved to ${columns.find((c) => c.id === status)?.label}`, 'success');
+      try {
+        const updated = await taskService.setStatus(draggedId, status);
+        syncTaskToState(updated);
+        toast(`Moved to ${columns.find((c) => c.id === status)?.label}`, 'success');
+      } catch (err) {
+        toast('Failed to move task', 'error');
+        console.error(err);
+      }
     }
     setDraggedId(null);
     setDragOverCol(null);
   };
 
   const handleStatusChange = async (taskId: string, status: TaskStatus) => {
-    await taskService.setStatus(taskId, status);
-    toast('Status updated', 'success');
+    try {
+      const updated = await taskService.setStatus(taskId, status);
+      syncTaskToState(updated);
+      toast('Status updated', 'success');
+    } catch (err) {
+      toast('Failed to update status', 'error');
+      console.error(err);
+    }
   };
 
   const renderCard = (task: Task) => {

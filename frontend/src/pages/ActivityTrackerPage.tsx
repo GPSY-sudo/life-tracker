@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,9 +10,8 @@ import {
   Minus,
   CircleDashed,
 } from 'lucide-react';
-import { useActivities, useAllDailyRecords } from '@/hooks/useAppData';
+import { useActivities, useAllDailyRecords, loadActivitiesFromAPI, loadDailyRecordsForRange, syncActivityToState, updateActivityStatusAndSync } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/useToast';
-import { dailyService } from '@/services/dailyService';
 import { activityService } from '@/services/activityService';
 import { ActivityForm } from '@/components/ActivityForm';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -26,8 +25,9 @@ import {
   getDayName,
   toISODate,
   parseISODate,
+  isDateApplicable,
 } from '@/utils/date';
-import type { ActivityStatus, Activity } from '@/types';
+import type { ActivityStatus, Activity, PausePeriod } from '@/types';
 
 export function ActivityTrackerPage() {
   const toast = useToast();
@@ -42,6 +42,9 @@ export function ActivityTrackerPage() {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const todayStr = todayISO();
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
   const isFutureMonth = new Date(year, month, 1) > now;
@@ -52,30 +55,135 @@ export function ActivityTrackerPage() {
     [year, month, daysInMonth]
   );
 
+  // Load activities on mount
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    setError(null);
+    loadActivitiesFromAPI().catch((err) => {
+      if (active) {
+        setError('Failed to load activities');
+        console.error(err);
+      }
+    }).finally(() => {
+      if (active) setIsLoading(false);
+    });
+    return () => { active = false; };
+  }, []);
+
+  // Load daily records for the selected month
+  useEffect(() => {
+    let active = true;
+    if (isLoading) return; // Don't load daily records until activities are loaded
+    
+    const startDate = toISODate(new Date(year, month, 1));
+    const endDate = toISODate(new Date(year, month, daysInMonth));
+
+    loadDailyRecordsForRange(startDate, endDate).catch((err) => {
+      if (active) {
+        console.error('Failed to load daily records:', err);
+        // Don't set a blocking error — activity grid can still work with empty records
+      }
+    });
+    return () => { active = false; };
+  }, [year, month, daysInMonth, isLoading]);
+
   const getActivityStatus = (date: string, activity: Activity): ActivityStatus | undefined => {
-    if (activity.startDate && date < activity.startDate) return undefined;
-    if (activity.endDate && date > activity.endDate) return undefined;
+    // Check if date is applicable for this activity
+    if (!isDateApplicable(date, activity)) return undefined;
+    
     const record = dailyRecords[date];
-    return record?.activities[activity.id];
+    const storedStatus = record?.activities[activity.id];
+    
+    // If there's a stored status, return it
+    if (storedStatus) return storedStatus;
+    
+    // If no stored status, apply the rule:
+    // - Past date: return 'incomplete' (inferred)
+    // - Today or future: return undefined (not recorded)
+    if (date < todayStr) {
+      return 'incomplete';
+    }
+    
+    return undefined;
   };
 
   const handleCellClick = async (date: string, activity: Activity) => {
     // Don't allow editing future dates
     if (date > todayStr) return;
-    // Don't allow editing inactive dates
-    if (activity.startDate && date < activity.startDate) return;
-    if (activity.endDate && date > activity.endDate) return;
+    // Don't allow editing non-applicable dates
+    if (!isDateApplicable(date, activity)) return;
 
-    const current = getActivityStatus(date, activity);
+    // For cycling, use only the stored status (ignore inferred Incomplete)
+    const record = dailyRecords[date];
+    const storedStatus = record?.activities[activity.id];
+    
     const next: ActivityStatus | undefined =
-      !current ? 'partial' : current === 'partial' ? 'completed' : current === 'completed' ? 'incomplete' : undefined;
-    await dailyService.updateActivityStatus(date, activity.id, next);
+      !storedStatus ? 'partial' : 
+      storedStatus === 'partial' ? 'completed' : 
+      storedStatus === 'completed' ? 'incomplete' : 
+      storedStatus === 'incomplete' ? 'partial' : 
+      undefined;
+
+    try {
+      await updateActivityStatusAndSync(date, activity.id, next);
+    } catch (err) {
+      toast('Failed to update activity status', 'error');
+      console.error(err);
+    }
   };
+
+  // Filter activities to show only those visible in the selected month
+  const visibleActivities = useMemo(() => {
+    const monthStart = toISODate(new Date(year, month, 1));
+    const monthEnd = toISODate(new Date(year, month, daysInMonth));
+
+    return activities.filter((activity) => {
+      // Activity is visible if:
+      // activity.startDate <= monthEnd AND (activity.endDate is empty OR activity.endDate >= monthStart)
+      const startsOnOrBefore = !activity.startDate || activity.startDate <= monthEnd;
+      const endsOnOrAfter = !activity.endDate || activity.endDate >= monthStart;
+      return startsOnOrBefore && endsOnOrAfter;
+    });
+  }, [activities, year, month, daysInMonth]);
+
+  // Dynamically sort visible activities based on today's date
+  const sortedActivities = useMemo(() => {
+    const today = todayISO();
+
+    const sorted = [...visibleActivities].sort((a, b) => {
+      // Determine lifecycle status for each activity
+      const getStatus = (act: Activity) => {
+        const isCurrentlyActive =
+          (!act.startDate || act.startDate <= today) &&
+          (!act.endDate || act.endDate >= today);
+        const isUpcoming = act.startDate && act.startDate > today;
+        const isExpired = act.endDate && act.endDate < today;
+
+        if (isCurrentlyActive) return 0; // CURRENTLY ACTIVE
+        if (isUpcoming) return 1; // UPCOMING
+        if (isExpired) return 2; // EXPIRED
+        return 3; // Fallback (shouldn't happen)
+      };
+
+      const statusA = getStatus(a);
+      const statusB = getStatus(b);
+
+      if (statusA !== statusB) {
+        return statusA - statusB;
+      }
+
+      // Within the same lifecycle group, preserve original order
+      return visibleActivities.indexOf(a) - visibleActivities.indexOf(b);
+    });
+
+    return sorted;
+  }, [visibleActivities]);
 
   // Calculate per-activity stats for the month
   const activityStats = useMemo(() => {
     if (isFutureMonth) return [];
-    return activities.map((activity) => {
+    return sortedActivities.map((activity) => {
       let completed = 0;
       let partial = 0;
       let incomplete = 0;
@@ -83,9 +191,10 @@ export function ActivityTrackerPage() {
       let score = 0;
 
       for (const date of monthDates) {
-        if (isCurrentMonth && date > todayStr) continue;
-        if (activity.startDate && date < activity.startDate) continue;
-        if (activity.endDate && date > activity.endDate) continue;
+        // Check if date is applicable and not in the future
+        const applicable = isDateApplicable(date, activity) && date <= todayStr;
+
+        if (!applicable) continue;
         active++;
         const status = getActivityStatus(date, activity);
         if (status === 'completed') completed++;
@@ -97,7 +206,7 @@ export function ActivityTrackerPage() {
       const pct = active > 0 ? Math.round((score / active) * 100) : 0;
       return { activity, completed, partial, incomplete, active, pct };
     });
-  }, [activities, monthDates, isCurrentMonth, todayStr, isFutureMonth, dailyRecords]);
+  }, [sortedActivities, monthDates, isCurrentMonth, todayStr, isFutureMonth, dailyRecords]);
 
   const overallStats = useMemo(() => {
     if (isFutureMonth || activityStats.length === 0) return { pct: 0, completed: 0, active: 0 };
@@ -129,13 +238,70 @@ export function ActivityTrackerPage() {
     }
   };
 
+  const handleCreateActivity = async (data: { name: string; startDate?: string; endDate?: string | null; scheduledDays?: string[]; pausePeriods?: PausePeriod[] }) => {
+    try {
+      const newActivity = await activityService.createActivity(data);
+      syncActivityToState(newActivity);
+      toast('Activity added', 'success');
+    } catch (err) {
+      toast('Failed to create activity', 'error');
+      console.error(err);
+    }
+  };
+
+  const handleUpdateActivity = async (data: { name: string; startDate?: string; endDate?: string | null; scheduledDays?: string[]; pausePeriods?: PausePeriod[] }) => {
+    if (!editingActivity) return;
+    try {
+      const updated = await activityService.updateActivity(editingActivity.id, data);
+      syncActivityToState(updated);
+      toast('Activity updated', 'success');
+    } catch (err) {
+      toast('Failed to update activity', 'error');
+      console.error(err);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteId) return;
-    await activityService.deleteActivity(deleteId);
-    toast('Activity deleted', 'success');
+    try {
+      await activityService.deleteActivity(deleteId);
+      syncActivityToState(null, deleteId);
+      toast('Activity deleted', 'success');
+    } catch (err) {
+      toast('Failed to delete activity', 'error');
+      console.error(err);
+    }
   };
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <PageHeader
+          title="Activity Tracker"
+          subtitle="Track your daily habits and activities"
+        />
+        <div className="flex items-center justify-center py-20">
+          <span className="text-sm text-ink-muted dark:text-slate-400">Loading activities...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <PageHeader
+          title="Activity Tracker"
+          subtitle="Track your daily habits and activities"
+        />
+        <div className="card p-8 text-center">
+          <p className="text-sm text-danger-text dark:text-red-400">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -238,6 +404,25 @@ export function ActivityTrackerPage() {
             }
           />
         </div>
+      ) : !isFutureMonth && sortedActivities.length === 0 ? (
+        <div className="card p-8">
+          <EmptyState
+            title="No activities in this month"
+            description="Select a different month or add a new activity with a start date in this period."
+            action={
+              <button
+                className="btn-primary px-4 py-2.5 text-sm"
+                onClick={() => {
+                  setEditingActivity(null);
+                  setFormOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                Add Activity
+              </button>
+            }
+          />
+        </div>
       ) : !isFutureMonth ? (
         <>
           {/* Desktop Grid */}
@@ -273,7 +458,7 @@ export function ActivityTrackerPage() {
                 </tr>
               </thead>
               <tbody>
-                {activities.map((activity) => {
+                {sortedActivities.map((activity) => {
                   const stats = activityStats.find((s) => s.activity.id === activity.id);
                   return (
                     <tr key={activity.id} className="border-t border-slate-100 dark:border-slate-700/50">
@@ -305,10 +490,7 @@ export function ActivityTrackerPage() {
                       </td>
                       {monthDates.map((date) => {
                         const status = getActivityStatus(date, activity);
-                        const isInactive = !!(
-                          (activity.startDate && date < activity.startDate) ||
-                          (activity.endDate && date > activity.endDate)
-                        );
+                        const isInactive = !isDateApplicable(date, activity);
                         const isFuture = date > todayStr;
                         return (
                           <td key={date} className="text-center p-1">
@@ -356,7 +538,7 @@ export function ActivityTrackerPage() {
 
           {/* Mobile: Per-activity cards */}
           <div className="md:hidden space-y-4">
-            {activities.map((activity) => {
+            {sortedActivities.map((activity) => {
               const stats = activityStats.find((s) => s.activity.id === activity.id);
               return (
                 <div key={activity.id} className="card p-4">
@@ -393,10 +575,7 @@ export function ActivityTrackerPage() {
                   <div className="grid grid-cols-7 gap-1">
                     {monthDates.map((date) => {
                       const status = getActivityStatus(date, activity);
-                      const isInactive = !!(
-                        (activity.startDate && date < activity.startDate) ||
-                        (activity.endDate && date > activity.endDate)
-                      );
+                      const isInactive = !isDateApplicable(date, activity);
                       const isFuture = date > todayStr;
                       const dayNum = parseISODate(date).getDate();
                       return (
@@ -466,14 +645,16 @@ export function ActivityTrackerPage() {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         activity={editingActivity}
-        onSubmit={(data) => {
+        year={year}
+        month={month}
+        onSubmit={async (data) => {
           if (editingActivity) {
-            activityService.updateActivity(editingActivity.id, data);
-            toast('Activity updated', 'success');
+            await handleUpdateActivity(data);
           } else {
-            activityService.createActivity(data);
-            toast('Activity added', 'success');
+            await handleCreateActivity(data);
           }
+          setFormOpen(false);
+          setEditingActivity(null);
         }}
       />
 
@@ -482,7 +663,7 @@ export function ActivityTrackerPage() {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         title="Delete Activity"
-        message="Are you sure you want to delete this activity? All tracking data for this activity will also be removed."
+        message="Are you sure you want to delete this activity? Historical tracking data will remain."
       />
     </div>
   );

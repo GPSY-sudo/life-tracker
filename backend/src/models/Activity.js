@@ -4,7 +4,20 @@ const activitySchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
   startDate: { type: String },
-  endDate: { type: String }
+  endDate: { type: String },
+  scheduledDays: {
+    type: [String],
+    enum: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+    default: undefined
+  },
+  pausePeriods: {
+    type: [{
+      startDate: { type: String, required: true },
+      endDate: { type: String, required: true },
+      reason: { type: String, default: '' }
+    }],
+    default: []
+  }
 }, {
   timestamps: true,
   toJSON: {

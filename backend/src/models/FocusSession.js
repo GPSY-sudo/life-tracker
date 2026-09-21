@@ -8,7 +8,8 @@ const focusSessionSchema = new mongoose.Schema({
   duration: { type: Number, required: true }, // minutes
   type: { type: String, enum: ['focus', 'shortBreak', 'longBreak'], required: true },
   activityId: { type: mongoose.Schema.Types.ObjectId, ref: 'Activity' },
-  taskId: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' }
+  taskId: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
+  wasLinked: { type: Boolean, default: true } // true if originally linked to Activity/Task, false if Free Focus
 }, {
   timestamps: true,
   toJSON: {

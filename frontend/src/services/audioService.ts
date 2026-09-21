@@ -19,6 +19,16 @@ class AudioService {
   private masterGain: GainNode | null = null;
   private masterVolume = 70;
   private muted = false;
+  private listeners: Set<() => void> = new Set();
+
+  subscribe(callback: () => void): () => void {
+    this.listeners.add(callback);
+    return () => this.listeners.delete(callback);
+  }
+
+  private notify(): void {
+    this.listeners.forEach((listener) => listener());
+  }
 
   private ensureContext(): AudioContext {
     if (!this.ctx) {
@@ -184,6 +194,7 @@ class AudioService {
       this.setVolume(soundId, volume);
       this.instances.get(soundId)!.enabled = true;
       this.applyVolume(soundId);
+      this.notify();
       return;
     }
 
@@ -198,6 +209,7 @@ class AudioService {
       enabled: true,
     });
     this.applyVolume(soundId);
+    this.notify();
   }
 
   pause(soundId: SoundId): void {
@@ -205,6 +217,7 @@ class AudioService {
     if (inst) {
       inst.enabled = false;
       this.applyVolume(soundId);
+      this.notify();
     }
   }
 
@@ -215,6 +228,7 @@ class AudioService {
         try { source.stop(); } catch {}
       }
       this.instances.delete(soundId);
+      this.notify();
     }
   }
 
@@ -242,16 +256,30 @@ class AudioService {
     if (this.masterGain && !this.muted) {
       this.masterGain.gain.value = this.masterVolume / 100;
     }
+    this.notify();
   }
 
   muteAll(): void {
     this.muted = true;
     if (this.masterGain) this.masterGain.gain.value = 0;
+    this.notify();
   }
 
   unmuteAll(): void {
     this.muted = false;
     if (this.masterGain) this.masterGain.gain.value = this.masterVolume / 100;
+    this.notify();
+  }
+
+  pauseAll(): void {
+    for (const soundId of Array.from(this.instances.keys())) {
+      const inst = this.instances.get(soundId);
+      if (inst) {
+        inst.enabled = false;
+        this.applyVolume(soundId);
+      }
+    }
+    this.notify();
   }
 
   stopAll(): void {
@@ -291,6 +319,28 @@ class AudioService {
 
   getVolume(soundId: SoundId): number {
     return this.instances.get(soundId)?.volume ?? 50;
+  }
+
+  // Get overall playback state
+  hasAnyPlaying(): boolean {
+    return Array.from(this.instances.values()).some((inst) => inst.enabled);
+  }
+
+  // Get mute state
+  isMuted(): boolean {
+    return this.muted;
+  }
+
+  // Get master volume
+  getMasterVolume(): number {
+    return this.masterVolume;
+  }
+
+  // Get enabled sound IDs
+  getEnabledSounds(): SoundId[] {
+    return Array.from(this.instances.entries())
+      .filter(([, inst]) => inst.enabled)
+      .map(([id]) => id);
   }
 }
 

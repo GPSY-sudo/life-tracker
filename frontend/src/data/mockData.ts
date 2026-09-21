@@ -144,7 +144,7 @@ function generateDailyRecords(): Record<string, DailyRecord> {
         'Worked on the project all afternoon. DSA problems were challenging today.',
         'Quiet study day. Python practice went well.',
         'Completed most tasks. Took a long walk for exercise.',
-        'Focused on DSA and Python today. Skipped reading.',
+        'Focused on DSA and Python today. Had a rest day.',
       ];
       const idx = Math.floor(seededRandom(`diary-text-${dateStr}`) * diaryTemplates.length);
       diaryNote = diaryTemplates[idx];

@@ -1,12 +1,9 @@
-import { store } from './store';
+import { apiFetch } from './api';
 import type { Task, TaskStatus, TaskPriority, TaskRecurrence } from '@/types';
-
-const delay = (ms = 50) => new Promise((r) => setTimeout(r, ms));
 
 export const taskService = {
   async getTasks(): Promise<Task[]> {
-    await delay();
-    return [...store.tasks];
+    return apiFetch<Task[]>('/tasks');
   },
 
   async createTask(data: {
@@ -20,34 +17,24 @@ export const taskService = {
     activityId?: string;
     tags?: string[];
   }): Promise<Task> {
-    await delay();
-    const now = new Date().toISOString();
-    const task: Task = {
-      id: store.generateId('task'),
-      title: data.title,
-      description: data.description ?? '',
-      dueDate: data.dueDate,
-      dueTime: data.dueTime,
-      priority: data.priority,
-      status: data.status ?? 'todo',
-      recurrence: data.recurrence ?? 'none',
-      activityId: data.activityId,
-      tags: data.tags ?? [],
-      createdAt: now,
-      updatedAt: now,
-    };
-    store.addTask(task);
-    return task;
+    return apiFetch<Task>('/tasks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   async updateTask(id: string, data: Partial<Omit<Task, 'id' | 'createdAt'>>): Promise<Task | null> {
-    await delay();
-    return store.updateTask(id, { ...data, updatedAt: new Date().toISOString() });
+    return apiFetch<Task>(`/tasks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 
   async deleteTask(id: string): Promise<boolean> {
-    await delay();
-    return store.removeTask(id);
+    await apiFetch<{ message: string }>(`/tasks/${id}`, {
+      method: 'DELETE',
+    });
+    return true;
   },
 
   async setStatus(id: string, status: TaskStatus): Promise<Task | null> {

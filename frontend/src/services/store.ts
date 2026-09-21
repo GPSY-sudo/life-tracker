@@ -1,17 +1,30 @@
 import {
-  mockActivities, mockDailyRecords, mockTasks, mockFocusSessions, mockSoundPresets, defaultSettings,
+  mockActivities, mockDailyRecords, mockFocusSessions, mockSoundPresets, defaultSettings,
 } from '@/data/mockData';
 import type { Activity, DailyRecord, Task, FocusSession, SoundPreset, AppSettings, ActivityStatus } from '@/types';
+import { savePomodoroStateToStorage, clearPomodoroStateFromStorage } from '@/utils/pomodoroStorage';
 
 class DataStore {
   activities: Activity[] = mockActivities.map((a) => ({ ...a }));
   dailyRecords: Record<string, DailyRecord> = Object.fromEntries(
     Object.entries(mockDailyRecords).map(([k, v]) => [k, { ...v, activities: { ...v.activities } }])
   );
-  tasks: Task[] = mockTasks.map((t) => ({ ...t, tags: [...t.tags] }));
+  tasks: Task[] = []; // Tasks are now API-backed, initialized empty here
   focusSessions: FocusSession[] = mockFocusSessions.map((s) => ({ ...s }));
   soundPresets: SoundPreset[] = mockSoundPresets.map((p) => ({ ...p, sounds: { ...p.sounds } }));
   settings: AppSettings = JSON.parse(JSON.stringify(defaultSettings));
+  
+  // Active Pomodoro state persisted across page navigation
+  activePomodoroState: {
+    mode: 'focus' | 'shortBreak' | 'longBreak';
+    timeRemaining: number;
+    isRunning: boolean;
+    currentSession: number;
+    completedThisCycle: number;
+    sessionStartTime: number | null; // Timestamp when focus session started
+    focusActivityId?: string;
+    focusTaskId?: string;
+  } | null = null;
 
   private listeners: Set<() => void> = new Set();
 
@@ -115,6 +128,30 @@ class DataStore {
   }
 
   setSettings(settings: AppSettings): void { this.settings = settings; this.notify(); }
+
+  // Pomodoro state persistence (in-memory + localStorage)
+  setActivePomodoroState(state: typeof this.activePomodoroState): void {
+    this.activePomodoroState = state;
+    
+    // Sync to localStorage for browser refresh persistence
+    if (state) {
+      savePomodoroStateToStorage(state);
+    } else {
+      clearPomodoroStateFromStorage();
+    }
+    
+    this.notify();
+  }
+
+  getActivePomodoroState() {
+    return this.activePomodoroState;
+  }
+
+  clearActivePomodoroState(): void {
+    this.activePomodoroState = null;
+    clearPomodoroStateFromStorage();
+    this.notify();
+  }
 }
 
 export const store = new DataStore();

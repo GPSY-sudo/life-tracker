@@ -8,7 +8,9 @@ import {
   BarChart3,
   Settings,
   ListChecks,
+  LogOut,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -22,6 +24,8 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const { user, logout } = useAuth();
+
   return (
     <aside className="hidden md:flex flex-col w-64 shrink-0 h-screen sticky top-0 border-r border-slate-200 dark:border-slate-700 bg-surface-card dark:bg-surface-dark-card p-4">
       <div className="flex items-center gap-2 px-3 py-4 mb-2">
@@ -43,8 +47,20 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="px-3 py-2 text-xs text-ink-light dark:text-slate-500">
-        Frontend demo with mock data
+      <div className="flex flex-col gap-2 px-3 py-2">
+        {user && (
+          <p className="text-xs text-ink-muted dark:text-slate-500 truncate" title={user.email}>
+            {user.name}
+          </p>
+        )}
+        <button
+          onClick={logout}
+          className="btn btn-ghost justify-start gap-2 w-full text-sm px-0"
+          aria-label="Log out"
+        >
+          <LogOut className="w-4 h-4" />
+          Log out
+        </button>
       </div>
     </aside>
   );

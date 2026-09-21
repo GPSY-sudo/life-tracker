@@ -1,3 +1,4 @@
+import { apiFetch } from './api';
 import { store } from './store';
 import type {
   ActivityAnalytics,
@@ -307,139 +308,11 @@ function calculateDiaryAnalytics(year: number, month: number): DiaryAnalytics {
 
 export const analyticsService = {
   async getMonthlyAnalytics(year: number, month: number): Promise<MonthlyAnalytics> {
-    await delay();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const isFutureMonth = new Date(year, month, 1) > today;
-
-    const activityAnalytics = store.activities.map((a) =>
-      calculateActivityAnalytics(a.id, year, month)
-    );
-
-    const taskAnalytics = calculateTaskAnalytics(year, month);
-    const focusAnalytics = calculateFocusAnalytics(year, month);
-    const diaryAnalytics = calculateDiaryAnalytics(year, month);
-
-    // Overall completion
-    const dates = getMonthDates(year, month);
-    const todayStr = toISODate(today);
-    const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
-
-    let totalActive = 0;
-    let totalScore = 0;
-    let fullyCompletedDays = 0;
-    let activeDays = 0;
-
-    const dailyCompletion: { date: string; rate: number }[] = [];
-
-    for (const date of dates) {
-      if (isCurrentMonth && date > todayStr) {
-        dailyCompletion.push({ date, rate: 0 });
-        continue;
-      }
-      if (isFutureMonth) {
-        dailyCompletion.push({ date, rate: 0 });
-        continue;
-      }
-
-      let dayActive = 0;
-      let dayScore = 0;
-      let dayCompleted = 0;
-
-      for (const activity of store.activities) {
-        if (!isDateInRange(date, activity.startDate, activity.endDate)) continue;
-        dayActive++;
-        const status = getActivityStatusForDate(date, activity.id, activity);
-        dayScore += activityWeight(status);
-        if (status === 'completed') dayCompleted++;
-      }
-
-      totalActive += dayActive;
-      totalScore += dayScore;
-
-      if (dayActive > 0) {
-        activeDays++;
-        const rate = Math.round((dayScore / dayActive) * 100);
-        dailyCompletion.push({ date, rate });
-        if (dayCompleted === dayActive) fullyCompletedDays++;
-      } else {
-        dailyCompletion.push({ date, rate: 0 });
-      }
-    }
-
-    const overallCompletion = totalActive > 0 ? Math.round((totalScore / totalActive) * 100) : 0;
-
-    // Previous month
-    const prevMonth = month === 0 ? 11 : month - 1;
-    const prevYear = month === 0 ? year - 1 : year;
-    const prevDates = getMonthDates(prevYear, prevMonth);
-    let prevTotalActive = 0;
-    let prevTotalScore = 0;
-
-    for (const date of prevDates) {
-      for (const activity of store.activities) {
-        if (!isDateInRange(date, activity.startDate, activity.endDate)) continue;
-        prevTotalActive++;
-        const status = getActivityStatusForDate(date, activity.id, activity);
-        prevTotalScore += activityWeight(status);
-      }
-    }
-
-    const previousMonthCompletion = prevTotalActive > 0 ? Math.round((prevTotalScore / prevTotalActive) * 100) : 0;
-    const improvement = overallCompletion - previousMonthCompletion;
-
-    const consistencyScore = activeDays > 0 ? Math.round((fullyCompletedDays / activeDays) * 100) : 0;
-
-    return {
-      month,
-      year,
-      overallCompletion,
-      previousMonthCompletion,
-      improvement,
-      activeDays,
-      fullyCompletedDays,
-      consistencyScore,
-      activityAnalytics,
-      taskAnalytics,
-      focusAnalytics,
-      diaryAnalytics,
-      dailyCompletion,
-    };
+    return apiFetch<MonthlyAnalytics>(`/analytics/month/${year}/${month}`);
   },
 
   async getYearlyAnalytics(year: number): Promise<{ month: number; completion: number; focusMinutes: number }[]> {
-    await delay();
-    const result: { month: number; completion: number; focusMinutes: number }[] = [];
-    const today = new Date();
-
-    for (let m = 0; m < 12; m++) {
-      if (new Date(year, m, 1) > today) {
-        result.push({ month: m, completion: 0, focusMinutes: 0 });
-        continue;
-      }
-      const dates = getMonthDates(year, m);
-      let totalActive = 0;
-      let totalScore = 0;
-      for (const date of dates) {
-        if (date > toISODate(today)) continue;
-        for (const activity of store.activities) {
-          if (!isDateInRange(date, activity.startDate, activity.endDate)) continue;
-          totalActive++;
-          const status = getActivityStatusForDate(date, activity.id, activity);
-          totalScore += activityWeight(status);
-        }
-      }
-      const completion = totalActive > 0 ? Math.round((totalScore / totalActive) * 100) : 0;
-      const focusMinutes = store.focusSessions
-        .filter((s) => s.type === 'focus')
-        .filter((s) => {
-          return s.date.startsWith(`${year}-${String(m + 1).padStart(2, '0')}`);
-        })
-        .reduce((sum, s) => sum + s.duration, 0);
-      result.push({ month: m, completion, focusMinutes });
-    }
-
-    return result;
+    return apiFetch<{ month: number; completion: number; focusMinutes: number }[]>(`/analytics/year/${year}`);
   },
 
   async getActivityAnalytics(year: number, month: number): Promise<ActivityAnalytics[]> {

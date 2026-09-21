@@ -9,8 +9,10 @@ import {
   Settings,
   ListChecks,
   X,
+  LogOut,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -25,6 +27,12 @@ const navItems = [
 
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  function handleLogout() {
+    setOpen(false);
+    logout();
+  }
 
   return (
     <>
@@ -45,7 +53,7 @@ export function MobileMenu() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="absolute left-0 top-0 bottom-0 w-64 bg-surface-card dark:bg-surface-dark-card p-4 animate-slide-in-right"
+            className="absolute left-0 top-0 bottom-0 w-64 bg-surface-card dark:bg-surface-dark-card p-4 animate-slide-in-right flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -59,7 +67,7 @@ export function MobileMenu() {
                 <X className="w-5 h-5 text-ink-muted dark:text-slate-400" />
               </button>
             </div>
-            <nav className="flex flex-col gap-1">
+            <nav className="flex flex-col gap-1 flex-1">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -73,6 +81,21 @@ export function MobileMenu() {
                 </NavLink>
               ))}
             </nav>
+            <div className="flex flex-col gap-1 pt-2 border-t border-slate-200 dark:border-slate-700">
+              {user && (
+                <p className="text-xs text-ink-muted dark:text-slate-500 px-3 py-1 truncate" title={user.email}>
+                  {user.name}
+                </p>
+              )}
+              <button
+                onClick={handleLogout}
+                className="btn btn-ghost justify-start gap-2 w-full text-sm"
+                aria-label="Log out"
+              >
+                <LogOut className="w-4 h-4" />
+                Log out
+              </button>
+            </div>
           </div>
         </div>
       )}

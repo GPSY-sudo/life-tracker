@@ -16,13 +16,15 @@ export const getActivities = async (req, res, next) => {
 // @route   POST /api/activities
 export const createActivity = async (req, res, next) => {
   try {
-    const { name, startDate, endDate } = req.body;
+    const { name, startDate, endDate, scheduledDays, pausePeriods } = req.body;
     
     const activity = new Activity({
       userId: req.user._id,
       name,
-      startDate: startDate ? toISODate(startDate) : undefined,
-      endDate: endDate ? toISODate(endDate) : undefined
+      startDate: startDate ? toISODate(startDate) : null,
+      endDate: endDate ? toISODate(endDate) : null,
+      scheduledDays: scheduledDays && scheduledDays.length > 0 ? scheduledDays : undefined,
+      pausePeriods: pausePeriods && pausePeriods.length > 0 ? pausePeriods : undefined
     });
 
     const createdActivity = await activity.save();
@@ -36,7 +38,7 @@ export const createActivity = async (req, res, next) => {
 // @route   PUT /api/activities/:id
 export const updateActivity = async (req, res, next) => {
   try {
-    const { name, startDate, endDate } = req.body;
+    const { name, startDate, endDate, scheduledDays, pausePeriods } = req.body;
     const activity = await Activity.findOne({ _id: req.params.id, userId: req.user._id });
 
     if (!activity) {
@@ -45,8 +47,10 @@ export const updateActivity = async (req, res, next) => {
     }
 
     if (name !== undefined) activity.name = name;
-    if (startDate !== undefined) activity.startDate = startDate ? toISODate(startDate) : undefined;
-    if (endDate !== undefined) activity.endDate = endDate ? toISODate(endDate) : undefined;
+    if (startDate !== undefined) activity.startDate = startDate ? toISODate(startDate) : null;
+    if (endDate !== undefined) activity.endDate = endDate ? toISODate(endDate) : null;
+    if (scheduledDays !== undefined) activity.scheduledDays = scheduledDays.length > 0 ? scheduledDays : undefined;
+    if (pausePeriods !== undefined) activity.pausePeriods = pausePeriods && pausePeriods.length > 0 ? pausePeriods : undefined;
 
     const updatedActivity = await activity.save();
     res.json(updatedActivity);

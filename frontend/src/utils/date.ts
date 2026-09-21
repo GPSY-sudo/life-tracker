@@ -72,12 +72,15 @@ export function getDayNumber(date: string | Date): number {
   return d.getDate();
 }
 
-export function getGreeting(): string {
+export function getGreeting(username?: string): string {
   const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  if (h < 21) return 'Good evening';
-  return 'Good night';
+  const name = username || '';
+  const suffix = name ? `, ${name}! ` : ' ';
+  
+  if (h >= 5 && h < 12) return `Good Morning${suffix}🌅`;
+  if (h >= 12 && h < 17) return `Good Afternoon${suffix}☀️`;
+  if (h >= 17 && h < 21) return `Good Evening${suffix}🌆`;
+  return `Hope you're having a peaceful night${suffix}🌙`;
 }
 
 export function formatDuration(minutes: number): string {
@@ -86,6 +89,32 @@ export function formatDuration(minutes: number): string {
   if (h > 0 && m > 0) return `${h}h ${m}m`;
   if (h > 0) return `${h}h`;
   return `${m}m`;
+}
+
+export function formatSessionDuration(minutes: number): string {
+  // Format focus session duration as human-readable string
+  // Handles fractional minutes for short focus sessions (< 1 minute)
+  
+  if (minutes < 0.0167) {
+    // Less than 1 second, shouldn't happen but handle gracefully
+    return '0s';
+  }
+  
+  if (minutes < 1) {
+    // Convert to seconds
+    const seconds = Math.round(minutes * 60);
+    return `${seconds}s`;
+  }
+  
+  // 1 minute or more: show minutes and seconds
+  const wholeMinutes = Math.floor(minutes);
+  const remainingSeconds = Math.round((minutes - wholeMinutes) * 60);
+  
+  if (remainingSeconds === 0) {
+    return `${wholeMinutes}m`;
+  }
+  
+  return `${wholeMinutes}m ${remainingSeconds}s`;
 }
 
 export function formatTime(seconds: number): string {
@@ -119,4 +148,46 @@ export function startOfWeek(date: string): string {
 export function getWeekDates(date: string): string[] {
   const start = startOfWeek(date);
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+
+/**
+ * Check if a date is applicable for an activity based on:
+ * 1. Date is within activity lifetime (startDate/endDate)
+ * 2. Date's weekday is scheduled (if scheduledDays exists)
+ */
+export function isDateApplicable(date: string, activity: { startDate?: string; endDate?: string; scheduledDays?: string[]; pausePeriods?: Array<{ startDate: string; endDate: string }> }): boolean {
+  // Check date range
+  if (activity.startDate && date < activity.startDate) return false;
+  if (activity.endDate && date > activity.endDate) return false;
+
+  // Check pause periods
+  if (isDatePaused(date, activity)) return false;
+
+  // Check schedule (if schedule exists, verify the weekday)
+  if (activity.scheduledDays && activity.scheduledDays.length > 0) {
+    const d = parseISODate(date);
+    const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayOfWeek = dayNames[d.getDay()];
+
+    return activity.scheduledDays.includes(dayOfWeek);
+  }
+
+  // If no schedule is set, all days are applicable (backward compatible)
+  return true;
+}
+
+/**
+ * Check if a date is within a pause period for an activity.
+ */
+export function isDatePaused(date: string, activity: { pausePeriods?: Array<{ startDate: string; endDate: string }> }): boolean {
+  if (!activity.pausePeriods || activity.pausePeriods.length === 0) {
+    return false;
+  }
+
+  for (const pause of activity.pausePeriods) {
+    if (date >= pause.startDate && date <= pause.endDate) {
+      return true;
+    }
+  }
+  return false;
 }

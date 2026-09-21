@@ -9,7 +9,16 @@ const soundPreferenceSchema = new mongoose.Schema({
     of: Number,
     default: {}
   },
-  selectedPreset: { type: String, default: 'preset-rainy-focus' }
+  selectedPreset: { type: String, default: 'preset-rainy-focus' },
+  customPresets: [{
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    sounds: {
+      type: Map,
+      of: Number,
+      required: true
+    }
+  }]
 }, {
   timestamps: true,
   toJSON: {
@@ -21,6 +30,15 @@ const soundPreferenceSchema = new mongoose.Schema({
       
       if (ret.soundVolumes && ret.soundVolumes instanceof Map) {
         ret.soundVolumes = Object.fromEntries(ret.soundVolumes);
+      }
+      
+      // Convert custom presets: convert Map to Object for each preset's sounds
+      if (ret.customPresets && Array.isArray(ret.customPresets)) {
+        ret.customPresets = ret.customPresets.map((preset) => ({
+          id: preset.id,
+          name: preset.name,
+          sounds: preset.sounds instanceof Map ? Object.fromEntries(preset.sounds) : preset.sounds
+        }));
       }
     }
   }
