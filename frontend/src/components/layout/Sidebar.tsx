@@ -28,11 +28,9 @@ export function Sidebar() {
 
   return (
     <aside className="hidden md:flex flex-col w-64 shrink-0 h-screen sticky top-0 border-r border-slate-200 dark:border-slate-700 bg-surface-card dark:bg-surface-dark-card p-4">
-      <div className="flex items-center gap-2 px-3 py-4 mb-2">
-        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-          <Target className="w-5 h-5 text-white" />
-        </div>
-        <span className="text-lg font-bold text-ink dark:text-slate-100">Life Tracker</span>
+      <div className="flex items-center gap-2.5 px-3 py-4 mb-2">
+        <img src="/miraithread-icon.png" alt="MiraiThread" className="h-6 w-6 flex-shrink-0" />
+        <span className="text-lg font-bold text-slate-100">MiraiThread</span>
       </div>
       <nav className="flex flex-col gap-1 flex-1">
         {navItems.map((item) => (

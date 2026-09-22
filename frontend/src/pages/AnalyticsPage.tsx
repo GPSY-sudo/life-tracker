@@ -633,12 +633,6 @@ function DiaryTab({ analytics, dailyRecords, year, month }: { analytics: Monthly
   const totalWords = useMemo(() => diaryEntriesThisMonth.reduce((sum, e) => sum + e.wordCount, 0), [diaryEntriesThisMonth]);
   const avgWordsPerEntry = diaryEntriesThisMonth.length > 0 ? Math.round(totalWords / diaryEntriesThisMonth.length) : 0;
   const longestEntry = diaryEntriesThisMonth.length > 0 ? Math.max(...diaryEntriesThisMonth.map(e => e.wordCount)) : 0;
-  
-  // Calculate writing consistency (days with entries / elapsed days, excluding future dates)
-  const today = now.getDate();
-  const monthHasStarted = now.getFullYear() > year || (now.getFullYear() === year && now.getMonth() > month);
-  const elapsedDays = monthHasStarted ? new Date(year, month + 1, 0).getDate() : today;
-  const consistencyPercentage = elapsedDays > 0 ? Math.round((diaryEntriesThisMonth.length / elapsedDays) * 100) : 0;
 
   // Dates with diary entries for calendar visualization
   const datesWithEntries = useMemo(() => new Set(diaryEntriesThisMonth.map(e => e.date)), [diaryEntriesThisMonth]);
@@ -710,11 +704,11 @@ function DiaryTab({ analytics, dailyRecords, year, month }: { analytics: Monthly
       {/* Writing consistency */}
       <div className="card p-5">
         <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-3">Writing Consistency</h3>
-        <p className="text-lg font-bold text-ink dark:text-slate-100 mb-1">{diaryEntriesThisMonth.length} of {elapsedDays} days</p>
+        <p className="text-lg font-bold text-ink dark:text-slate-100 mb-1">{da.daysWithEntries} of {monthDateStrings.filter(d => !isFuture(d)).length} days</p>
         <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-2">
-          <div className="bg-primary dark:bg-primary-400 h-2 rounded-full" style={{ width: `${consistencyPercentage}%` }} />
+          <div className="bg-primary dark:bg-primary-400 h-2 rounded-full" style={{ width: `${da.diaryConsistency}%` }} />
         </div>
-        <p className="text-xs text-ink-muted dark:text-slate-400">{consistencyPercentage}% of elapsed days in {getMonthName(month)}</p>
+        <p className="text-xs text-ink-muted dark:text-slate-400">{da.diaryConsistency}% of eligible days in {getMonthName(month)}</p>
       </div>
 
       {/* Diary Activity Calendar */}

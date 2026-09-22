@@ -45,7 +45,9 @@ const isDateApplicable = (date, activity, todayStr) => {
 
   // Check schedule (if schedule exists, verify the weekday)
   if (activity.scheduledDays && activity.scheduledDays.length > 0) {
-    const d = new Date(date.split('-').map(Number));
+    // Parse as local date to check weekday in user's timezone
+    const [year, month, day] = date.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
     d.setHours(0, 0, 0, 0);
     const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
     const dayOfWeek = dayNames[d.getDay()];
@@ -209,9 +211,11 @@ export const getMonthlyAnalytics = async (userId, year, month) => {
   let daysWithEntries = 0;
   let diaryStreak = 0;
   let monthlyCount = 0;
+  let applicableDays = 0;
 
   for (const date of dates) {
     if (isCurrentMonth && date > todayStr) continue;
+    applicableDays++;
     const day = recordsMap.get(date);
     if (day && day.diaryNote && day.diaryNote.trim().length > 0) {
       daysWithEntries++;
@@ -232,7 +236,8 @@ export const getMonthlyAnalytics = async (userId, year, month) => {
     }
   }
 
-  const diaryAnalytics = { daysWithEntries, diaryStreak, monthlyCount };
+  const diaryConsistency = applicableDays > 0 ? Math.round((daysWithEntries / applicableDays) * 100) : 0;
+  const diaryAnalytics = { daysWithEntries, diaryStreak, monthlyCount, diaryConsistency };
 
   // --- OVERALL COMPLETION & DAILY COMPLETION ---
   let totalActive = 0, totalScore = 0, fullyCompletedDays = 0, activeDays = 0;

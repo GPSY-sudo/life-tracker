@@ -15,6 +15,7 @@ import {
 import { authService } from '@/services/authService';
 import { loadSoundPreferencesFromAPI, loadAppPreferencesFromAPI } from '@/hooks/useAppData';
 import type { User, AuthResponse } from '@/types';
+import { LogoutFarewellModal } from '@/components/LogoutFarewellModal';
 
 // ── Context shape ──────────────────────────────────────────────────────────────
 
@@ -25,7 +26,7 @@ interface AuthContextValue {
   isLoading: boolean;
   /** Call after a successful login/register — stores the user from the response. */
   handleAuthSuccess: (response: AuthResponse) => void;
-  /** Clears auth state, removes the token, and redirects to /login. */
+  /** Initiates logout with farewell modal. Shows modal, clears auth, then navigates to / on user action. */
   logout: () => void;
 }
 
@@ -37,17 +38,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFarewellModal, setShowFarewellModal] = useState(false);
 
   // Clear state and redirect — used both for explicit logout and 401 responses.
-  const logout = useCallback(() => {
+  // For explicit logout: shows farewell modal, user clicks "Go to Home" to navigate to /
+  // For 401 (unauthorized): silently redirects to / (no modal)
+  const logout = useCallback((isExplicit = true) => {
     clearStoredToken();
     setUser(null);
-    navigate('/login', { replace: true });
+    
+    if (isExplicit) {
+      // Explicit logout: show farewell modal
+      setShowFarewellModal(true);
+    } else {
+      // 401 unauthorized: silently redirect
+      navigate('/', { replace: true });
+    }
+  }, [navigate]);
+
+  // Called when user clicks "Go to Home" in the farewell modal
+  const handleGoToHome = useCallback(() => {
+    setShowFarewellModal(false);
+    navigate('/', { replace: true });
   }, [navigate]);
 
   // Register the 401 handler with the API layer once on mount.
+  // Pass isExplicit=false so 401 doesn't show the modal
   useEffect(() => {
-    registerUnauthorizedHandler(logout);
+    registerUnauthorizedHandler(() => logout(false));
   }, [logout]);
 
   // On mount: if a token exists in storage, validate it by calling /api/auth/me.
@@ -99,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{ user, isLoading, handleAuthSuccess, logout }}>
       {children}
+      <LogoutFarewellModal isOpen={showFarewellModal} onGoHome={handleGoToHome} />
     </AuthContext.Provider>
   );
 }

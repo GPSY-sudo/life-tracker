@@ -57,7 +57,7 @@ export function TodayPage() {
     const load = async () => {
       const text = await diaryService.getDiary(selectedDate);
       if (active) {
-        setDiaryText(text);
+        setDiaryText(text.note);
         setDiaryLoaded(true);
       }
     };

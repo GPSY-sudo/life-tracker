@@ -11,9 +11,9 @@ import {
   BarChart3,
   Users,
   Shield,
-  Github,
-  Twitter,
 } from 'lucide-react';
+import { PublicNavbar } from '../components/layout/PublicNavbar';
+import { LandingFooter } from '../components/layout/LandingFooter';
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -21,128 +21,121 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-950 dark:via-blue-950 dark:to-slate-900">
       {/* Navigation */}
-      <nav className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Target className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-bold text-ink dark:text-slate-100">Life Tracker</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <a
-              href="#features"
-              className="text-sm text-ink-muted dark:text-slate-400 hover:text-primary dark:hover:text-primary-300 transition-colors"
-            >
-              Features
-            </a>
-            <a
-              href="#how-it-works"
-              className="text-sm text-ink-muted dark:text-slate-400 hover:text-primary dark:hover:text-primary-300 transition-colors"
-            >
-              How It Works
-            </a>
-            <button
-              onClick={() => navigate('/login')}
-              className="text-sm font-medium text-ink dark:text-slate-200 hover:text-primary dark:hover:text-primary-300 transition-colors"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => navigate('/register')}
-              className="btn-primary px-4 py-2 text-sm"
-            >
-              Get Started
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicNavbar />
 
-      {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-4 md:px-8 py-20 md:py-32">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          {/* Hero Content */}
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <h1 className="text-4xl md:text-5xl font-bold text-ink dark:text-slate-100 leading-tight">
-                Track Your Life,
-                <br />
-                <span className="bg-gradient-to-r from-primary to-blue-600 dark:from-primary-300 dark:to-blue-400 bg-clip-text text-transparent">
-                  Master Your Goals
-                </span>
-              </h1>
-              <p className="text-lg text-ink-muted dark:text-slate-400 max-w-md">
-                All-in-one productivity system for activities, tasks, focus sessions, and personal reflection. Take control of your day.
+      {/* Hero Section - Two Column Layout */}
+      <section className="max-w-6xl mx-auto px-4 md:px-8 py-12 md:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          {/* LEFT: Content */}
+          <div className="flex flex-col justify-center space-y-6">
+            {/* MiraiThread Logo */}
+            <div className="w-full max-w-sm">
+              <img 
+                src="/miraithread-logo-dark.png" 
+                alt="MiraiThread" 
+                className="w-full h-auto"
+              />
+            </div>
+            
+            {/* Tagline and Description */}
+            <div className="space-y-4">
+              <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 font-medium">
+                Mirai: Future • Thread: Connection
+              </p>
+              <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed">
+                Bring your tasks, activities, focus sessions, diary, and progress into one connected view of your life. Your future is built from intentional days.
               </p>
             </div>
-
-            <div className="flex gap-3">
+            
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <button
                 onClick={() => navigate('/register')}
-                className="btn-primary px-6 py-3 text-base font-semibold flex items-center gap-2"
+                className="btn-primary px-8 py-3 text-base font-semibold flex items-center justify-center gap-2"
               >
-                Get Started Free
+                Start Your Journey
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
-                onClick={() => navigate('/login')}
-                className="btn-secondary px-6 py-3 text-base font-semibold"
+                onClick={() => {
+                  document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="btn-secondary px-8 py-3 text-base font-semibold"
               >
-                Sign In
+                See How It Works
               </button>
             </div>
-
-            <p className="text-sm text-ink-muted dark:text-slate-500">
-              ✨ No credit card required • 100% free • Open source
+            
+            <p className="text-sm text-slate-600 dark:text-slate-500">
+              ✨ Free • Open source • No credit card required
             </p>
           </div>
 
-          {/* Hero Visual */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-blue-600/10 dark:from-primary/20 dark:to-blue-600/20 rounded-2xl blur-3xl" />
-            <div className="relative bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-xl border border-slate-200 dark:border-slate-700">
-              <div className="space-y-4">
-                {/* Activity Summary Card */}
-                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                  <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
-                    <Target className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-ink-muted dark:text-slate-400">Activities</p>
-                    <p className="text-sm font-bold text-ink dark:text-slate-100">4 / 5 completed</p>
+          {/* RIGHT: Connected Thread Card */}
+          <div className="flex items-center justify-center">
+            <div className="card p-8 bg-slate-800/40 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 dark:border-slate-700/50 w-full max-w-md">
+              {/* Thread Diagram */}
+              <div className="mb-6 flex justify-center">
+                <svg className="w-48 h-12" viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="connectedThreadGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" style={{ stopColor: '#6366F1', stopOpacity: 1 }} />
+                      <stop offset="50%" style={{ stopColor: '#06B6D4', stopOpacity: 1 }} />
+                      <stop offset="100%" style={{ stopColor: '#06B6D4', stopOpacity: 1 }} />
+                    </linearGradient>
+                  </defs>
+                  {/* Main connecting line with step pattern */}
+                  <path d="M 10 25 L 35 25 L 35 15 L 60 15 L 60 25 L 85 25 L 85 15 L 110 15 L 110 25 L 135 25 L 135 15 L 160 15 L 160 25 L 190 25" 
+                        stroke="url(#connectedThreadGrad)" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  {/* Node dots */}
+                  <circle cx="10" cy="25" r="2.5" fill="#6366F1" />
+                  <circle cx="60" cy="15" r="2.5" fill="#06B6D4" />
+                  <circle cx="110" cy="25" r="2.5" fill="#06B6D4" />
+                  <circle cx="160" cy="15" r="2.5" fill="#06B6D4" />
+                  <circle cx="190" cy="25" r="2.5" fill="#06B6D4" />
+                </svg>
+              </div>
+              
+              {/* Title */}
+              <h3 className="text-center text-sm text-slate-400 mb-6 font-medium tracking-wide">
+                Your connected thread
+              </h3>
+              
+              {/* Content Items */}
+              <div className="space-y-3">
+                {/* Tasks */}
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white">Tasks</div>
+                    <div className="text-xs text-slate-400">Turn intentions into action</div>
                   </div>
                 </div>
-
-                {/* Task Summary Card */}
-                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                  <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
-                    <ListChecks className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-ink-muted dark:text-slate-400">Tasks</p>
-                    <p className="text-sm font-bold text-ink dark:text-slate-100">3 completed</p>
+                
+                {/* Activities */}
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors">
+                  <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white">Activities</div>
+                    <div className="text-xs text-slate-400">Track what you actually did</div>
                   </div>
                 </div>
-
-                {/* Focus Summary Card */}
-                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                  <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-ink-muted dark:text-slate-400">Focus Time</p>
-                    <p className="text-sm font-bold text-ink dark:text-slate-100">2h 15m today</p>
+                
+                {/* Focus */}
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors">
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 mt-1.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white">Focus</div>
+                    <div className="text-xs text-slate-400">Protect your attention</div>
                   </div>
                 </div>
-
-                {/* Diary Summary Card */}
-                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                  <div className="w-10 h-10 rounded-lg bg-success/15 flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-success" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-ink-muted dark:text-slate-400">Diary</p>
-                    <p className="text-sm font-bold text-success dark:text-green-400">Today written ✓</p>
+                
+                {/* Diary & Mood */}
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors">
+                  <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white">Diary & Mood</div>
+                    <div className="text-xs text-slate-400">Reflect on your day</div>
                   </div>
                 </div>
               </div>
@@ -151,306 +144,400 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="max-w-6xl mx-auto px-4 md:px-8 py-20">
-        <div className="text-center mb-16">
+      {/* Why MiraiThread */}
+      <section className="max-w-6xl mx-auto px-4 md:px-8 py-16 border-t border-slate-200 dark:border-slate-800">
+        <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-ink dark:text-slate-100 mb-4">
-            Everything You Need to Track Your Life
+            Why MiraiThread?
           </h2>
-          <p className="text-lg text-ink-muted dark:text-slate-400 max-w-2xl mx-auto">
-            Powerful features designed to help you build habits, complete tasks, maintain focus, and reflect on your progress.
+          <p className="text-lg text-ink-muted dark:text-slate-400 max-w-3xl mx-auto">
+            Every task you complete, every activity you track, every focused session you spend, and every reflection you write becomes part of one continuous thread.
           </p>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-2 items-center max-w-4xl mx-auto">
+          {/* Today */}
+          <div className="text-center">
+            <div className="text-sm font-semibold text-ink dark:text-slate-200 mb-2">Today</div>
+            <div className="text-xs text-ink-muted dark:text-slate-400">Your intentions</div>
+          </div>
+
+          {/* Thread line connector */}
+          <div className="hidden md:flex justify-center">
+            <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-full" />
+          </div>
+
+          {/* Tomorrow */}
+          <div className="text-center">
+            <div className="text-sm font-semibold text-ink dark:text-slate-200 mb-2">Tomorrow</div>
+            <div className="text-xs text-ink-muted dark:text-slate-400">Your actions</div>
+          </div>
+
+          {/* Thread line connector */}
+          <div className="hidden md:flex justify-center">
+            <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-full" />
+          </div>
+
+          {/* Your Future */}
+          <div className="text-center">
+            <div className="text-sm font-semibold text-ink dark:text-slate-200 mb-2">Your Future</div>
+            <div className="text-xs text-ink-muted dark:text-slate-400">Your growth</div>
+          </div>
+        </div>
+
+        <div className="text-center mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+          <p className="text-sm text-ink-muted dark:text-slate-400 max-w-2xl mx-auto">
+            <span className="font-semibold text-ink dark:text-slate-200">Mirai</span> means "future" in Japanese. 
+            <span className="font-semibold text-ink dark:text-slate-200"> Thread</span> represents the connection between the moments that shape it.
+          </p>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="max-w-6xl mx-auto px-4 md:px-8 py-16 scroll-mt-20">
+
+                <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+            Features to Connect Your Days
+          </h2>
+        
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Feature Card: Activities */}
-          <div className="card p-6 hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-4">
-              <Target className="w-6 h-6 text-primary" />
+          {/* Feature: Activities */}
+          <div className="card p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mb-4">
+              <Target className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Activity Tracker</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400 mb-4">
-              Track recurring habits and activities with daily status updates. Set custom schedules and pause periods.
+            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Build Consistency</h3>
+            <p className="text-sm text-ink-muted dark:text-slate-400">
+              Track recurring activities and understand what you actually accomplished. See your streaks grow and patterns emerge.
             </p>
-            <ul className="space-y-2 text-sm text-ink-muted dark:text-slate-400">
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>4-state tracking system</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Weekly schedules</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Streak analytics</span>
-              </li>
-            </ul>
           </div>
 
-          {/* Feature Card: Tasks */}
-          <div className="card p-6 hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-4">
-              <ListChecks className="w-6 h-6 text-primary" />
+          {/* Feature: Tasks */}
+          <div className="card p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mb-4">
+              <ListChecks className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Task Manager</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400 mb-4">
-              Create and organize tasks with priorities, due dates, and multiple views for maximum productivity.
+            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Turn Intentions into Work</h3>
+            <p className="text-sm text-ink-muted dark:text-slate-400">
+              Create tasks, set priorities, and track progress. Move between Kanban and list views as you work.
             </p>
-            <ul className="space-y-2 text-sm text-ink-muted dark:text-slate-400">
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Kanban & list views</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Priority levels</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Due date tracking</span>
-              </li>
-            </ul>
           </div>
 
-          {/* Feature Card: Focus */}
-          <div className="card p-6 hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-4">
-              <Clock className="w-6 h-6 text-primary" />
+          {/* Feature: Focus */}
+          <div className="card p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mb-4">
+              <Clock className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Focus Sessions</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400 mb-4">
-              Pomodoro timer with configurable intervals. Track focus time and stay in the zone with ambient sounds.
+            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Protect Your Attention</h3>
+            <p className="text-sm text-ink-muted dark:text-slate-400">
+              Pomodoro-style focus sessions with ambient sounds. Track where your intentional hours go.
             </p>
-            <ul className="space-y-2 text-sm text-ink-muted dark:text-slate-400">
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Pomodoro technique</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Customizable timers</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Ambient sounds</span>
-              </li>
-            </ul>
           </div>
 
-          {/* Feature Card: Diary */}
-          <div className="card p-6 hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-4">
-              <BookOpen className="w-6 h-6 text-primary" />
+          {/* Feature: Diary */}
+          <div className="card p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mb-4">
+              <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Diary & Journaling</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400 mb-4">
-              Daily journal entries with mood tracking. Reflect on your day and track your emotional journey.
+            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Capture & Reflect</h3>
+            <p className="text-sm text-ink-muted dark:text-slate-400">
+              Write daily entries and record how each day felt. See your emotional journey over time.
             </p>
-            <ul className="space-y-2 text-sm text-ink-muted dark:text-slate-400">
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Mood tracking</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Word count stats</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Calendar view</span>
-              </li>
-            </ul>
           </div>
 
-          {/* Feature Card: Analytics */}
-          <div className="card p-6 hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-4">
-              <BarChart3 className="w-6 h-6 text-primary" />
+          {/* Feature: Mood */}
+          <div className="card p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mb-4">
+              <Users className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Advanced Analytics</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400 mb-4">
-              Comprehensive insights into your productivity patterns with beautiful visualizations and trends.
+            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Understand Your Days</h3>
+            <p className="text-sm text-ink-muted dark:text-slate-400">
+              Track mood without reducing life to a score. See how your feelings connect to your actions.
             </p>
-            <ul className="space-y-2 text-sm text-ink-muted dark:text-slate-400">
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Completion trends</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Monthly reviews</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Streak tracking</span>
-              </li>
-            </ul>
           </div>
 
-          {/* Feature Card: Responsive */}
-          <div className="card p-6 hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-4">
-              <Smartphone className="w-6 h-6 text-primary" />
+          {/* Feature: Analytics */}
+          <div className="card p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mb-4">
+              <BarChart3 className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Mobile Ready</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400 mb-4">
-              Beautiful responsive design works perfectly on desktop, tablet, and mobile devices.
+            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">See the Pattern</h3>
+            <p className="text-sm text-ink-muted dark:text-slate-400">
+              Comprehensive analytics show trends across your days, revealing your progress and patterns.
             </p>
-            <ul className="space-y-2 text-sm text-ink-muted dark:text-slate-400">
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Mobile-first design</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Dark mode support</span>
-              </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>Touch optimized</span>
-              </li>
-            </ul>
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="max-w-6xl mx-auto px-4 md:px-8 py-20 bg-white/50 dark:bg-slate-800/30 rounded-3xl">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-ink dark:text-slate-100 mb-4">
-            How It Works
-          </h2>
-          <p className="text-lg text-ink-muted dark:text-slate-400 max-w-2xl mx-auto">
-            Simple workflow to manage your entire life in one place
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Step 1 */}
+            {/* Analytics Section */}
+      <section id="analytics" className="max-w-6xl mx-auto px-4 md:px-8 py-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Insight: Speed */}
           <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl mx-auto mb-4">
-              1
+            <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mx-auto mb-4">
+              <Zap className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Create</h3>
+            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Fast & Smooth</h3>
             <p className="text-sm text-ink-muted dark:text-slate-400">
-              Add activities, tasks, and set your focus goals
+              Built for speed. Real-time sync across your devices.
             </p>
           </div>
 
-          {/* Arrow */}
-          <div className="hidden md:flex items-center justify-center">
-            <ArrowRight className="w-6 h-6 text-slate-300 dark:text-slate-600" />
+          {/* Insight: Security */}
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Secure</h3>
+            <p className="text-sm text-ink-muted dark:text-slate-400">
+              Your data is encrypted and protected. You own it.
+            </p>
+          </div>
+
+          {/* Insight: Free */}
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mx-auto mb-4">
+              <Smartphone className="w-8 h-8 text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Open & Free</h3>
+            <p className="text-sm text-ink-muted dark:text-slate-400">
+              No paywalls, no ads. Open source. Forever free.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="how-it-works" className="max-w-6xl mx-auto px-4 md:px-8 py-12 md:py-16 scroll-mt-20">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+            How It Works
+          </h2>
+          <p className="text-base text-slate-600 dark:text-slate-400">
+            Four simple steps to building your thread
+          </p>
+        </div>
+
+        {/* Decorative thread line above steps (desktop) */}
+        <div className="hidden md:flex justify-center mb-8">
+          <svg className="w-40 h-6" viewBox="0 0 160 24" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="threadGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{ stopColor: '#3B82F6', stopOpacity: 0.5 }} />
+                <stop offset="50%" style={{ stopColor: '#6366F1', stopOpacity: 0.5 }} />
+                <stop offset="100%" style={{ stopColor: '#06B6D4', stopOpacity: 0.5 }} />
+              </linearGradient>
+            </defs>
+            {/* Decorative thread */}
+            <line x1="20" y1="12" x2="140" y2="12" stroke="url(#threadGrad1)" strokeWidth="2" strokeLinecap="round" />
+            {/* Nodes */}
+            <circle cx="20" cy="12" r="3.5" fill="#3B82F6" opacity="0.6" />
+            <circle cx="140" cy="12" r="3.5" fill="#06B6D4" opacity="0.6" />
+          </svg>
+        </div>
+
+        {/* Desktop: 4 equal columns with connecting thread */}
+        <div className="hidden md:relative md:grid md:grid-cols-4 md:gap-6">
+          {/* SVG thread connecting steps (positioned absolutely) */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ top: '25px' }} viewBox="0 0 400 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="threadGradConnect" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{ stopColor: '#3B82F6', stopOpacity: 0.4 }} />
+                <stop offset="50%" style={{ stopColor: '#6366F1', stopOpacity: 0.4 }} />
+                <stop offset="100%" style={{ stopColor: '#06B6D4', stopOpacity: 0.4 }} />
+              </linearGradient>
+            </defs>
+            {/* Main connecting line */}
+            <line x1="5%" y1="50%" x2="95%" y2="50%" stroke="url(#threadGradConnect)" strokeWidth="2" strokeLinecap="round" />
+            {/* Node dots */}
+            <circle cx="25%" cy="50%" r="3" fill="#3B82F6" opacity="0.5" />
+            <circle cx="50%" cy="50%" r="3" fill="#6366F1" opacity="0.5" />
+            <circle cx="75%" cy="50%" r="3" fill="#06B6D4" opacity="0.5" />
+          </svg>
+
+          {/* Step 1 */}
+          <div className="text-center relative z-10">
+            <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm mx-auto mb-3">
+              01
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2">Plan</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Decide what matters today. Set your intentions.
+            </p>
+          </div>
+
+          {/* Step 2 */}
+          <div className="text-center relative z-10">
+            <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm mx-auto mb-3">
+              02
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2">Focus</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Spend intentional time on what matters.
+            </p>
+          </div>
+
+          {/* Step 3 */}
+          <div className="text-center relative z-10">
+            <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm mx-auto mb-3">
+              03
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2">Reflect</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Record what happened and how it felt.
+            </p>
+          </div>
+
+          {/* Step 4 */}
+          <div className="text-center relative z-10">
+            <div className="w-10 h-10 rounded-full bg-cyan-600 text-white flex items-center justify-center font-bold text-sm mx-auto mb-3">
+              04
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2">Grow</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Use patterns to understand your progress.
+            </p>
+          </div>
+        </div>
+
+        {/* Decorative thread line below steps (desktop) */}
+        <div className="hidden md:flex justify-center mt-8">
+          <svg className="w-64 h-4" viewBox="0 0 260 16" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="threadGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{ stopColor: '#3B82F6', stopOpacity: 0.4 }} />
+                <stop offset="33%" style={{ stopColor: '#6366F1', stopOpacity: 0.4 }} />
+                <stop offset="66%" style={{ stopColor: '#06B6D4', stopOpacity: 0.4 }} />
+                <stop offset="100%" style={{ stopColor: '#06B6D4', stopOpacity: 0.4 }} />
+              </linearGradient>
+            </defs>
+            {/* Decorative thread */}
+            <line x1="15" y1="8" x2="245" y2="8" stroke="url(#threadGrad2)" strokeWidth="1.5" strokeLinecap="round" />
+            {/* Node dots */}
+            <circle cx="15" cy="8" r="2.5" fill="#3B82F6" opacity="0.6" />
+            <circle cx="85" cy="8" r="2.5" fill="#6366F1" opacity="0.6" />
+            <circle cx="175" cy="8" r="2.5" fill="#06B6D4" opacity="0.6" />
+            <circle cx="245" cy="8" r="2.5" fill="#06B6D4" opacity="0.6" />
+          </svg>
+        </div>
+
+        {/* Mobile: Stacked with vertical thread */}
+        <div className="md:hidden space-y-6">
+          {/* Step 1 */}
+          <div className="text-center">
+            <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm mx-auto mb-2">
+              01
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">Plan</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Decide what matters today. Set your intentions.
+            </p>
+          </div>
+
+          {/* Vertical thread connector */}
+          <div className="flex justify-center">
+            <svg className="w-1 h-6" viewBox="0 0 4 24" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="threadGradMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style={{ stopColor: '#3B82F6', stopOpacity: 0.4 }} />
+                  <stop offset="100%" style={{ stopColor: '#6366F1', stopOpacity: 0.4 }} />
+                </linearGradient>
+              </defs>
+              <line x1="2" y1="0" x2="2" y2="24" stroke="url(#threadGradMobile)" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="2" cy="12" r="2" fill="#6366F1" opacity="0.5" />
+            </svg>
           </div>
 
           {/* Step 2 */}
           <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl mx-auto mb-4">
-              2
+            <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm mx-auto mb-2">
+              02
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Track</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400">
-              Log daily activity status and complete tasks
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">Focus</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Spend intentional time on what matters.
             </p>
           </div>
 
-          {/* Arrow */}
-          <div className="hidden md:flex items-center justify-center">
-            <ArrowRight className="w-6 h-6 text-slate-300 dark:text-slate-600" />
+          {/* Vertical thread connector */}
+          <div className="flex justify-center">
+            <svg className="w-1 h-6" viewBox="0 0 4 24" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="threadGradMobile2" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style={{ stopColor: '#6366F1', stopOpacity: 0.4 }} />
+                  <stop offset="100%" style={{ stopColor: '#06B6D4', stopOpacity: 0.4 }} />
+                </linearGradient>
+              </defs>
+              <line x1="2" y1="0" x2="2" y2="24" stroke="url(#threadGradMobile2)" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="2" cy="12" r="2" fill="#06B6D4" opacity="0.5" />
+            </svg>
           </div>
 
           {/* Step 3 */}
           <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl mx-auto mb-4">
-              3
+            <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm mx-auto mb-2">
+              03
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Analyze</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400">
-              Review analytics and improve your habits
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">Reflect</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Record what happened and how it felt.
             </p>
           </div>
 
-          {/* Arrow */}
-          <div className="hidden md:flex items-center justify-center">
-            <ArrowRight className="w-6 h-6 text-slate-300 dark:text-slate-600" />
+          {/* Vertical thread connector */}
+          <div className="flex justify-center">
+            <svg className="w-1 h-6" viewBox="0 0 4 24" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="threadGradMobile3" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style={{ stopColor: '#06B6D4', stopOpacity: 0.4 }} />
+                  <stop offset="100%" style={{ stopColor: '#06B6D4', stopOpacity: 0.4 }} />
+                </linearGradient>
+              </defs>
+              <line x1="2" y1="0" x2="2" y2="24" stroke="url(#threadGradMobile3)" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="2" cy="12" r="2" fill="#06B6D4" opacity="0.5" />
+            </svg>
           </div>
 
           {/* Step 4 */}
-          <div className="text-center md:col-start-4">
-            <div className="w-16 h-16 rounded-full bg-success text-white flex items-center justify-center font-bold text-xl mx-auto mb-4">
-              🎯
+          <div className="text-center">
+            <div className="w-10 h-10 rounded-full bg-cyan-600 text-white flex items-center justify-center font-bold text-sm mx-auto mb-2">
+              04
             </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Succeed</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400">
-              Reach your goals and build lasting habits
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">Grow</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Use patterns to understand your progress.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
+
+
+      {/* Final CTA */}
       <section className="max-w-6xl mx-auto px-4 md:px-8 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Benefit: Fast */}
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-4">
-              <Zap className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Lightning Fast</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400">
-              Built with modern React and optimized performance. Sync across tabs instantly.
-            </p>
-          </div>
-
-          {/* Benefit: Secure */}
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">100% Secure</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400">
-              JWT-based authentication and encrypted password storage. Your data is safe.
-            </p>
-          </div>
-
-          {/* Benefit: Free */}
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-4">
-              <Users className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold text-ink dark:text-slate-100 mb-2">Totally Free</h3>
-            <p className="text-sm text-ink-muted dark:text-slate-400">
-              No paywalls, no ads, no surprises. Open source and free forever.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="max-w-6xl mx-auto px-4 md:px-8 py-20">
-        <div className="relative overflow-hidden bg-gradient-to-br from-primary to-blue-600 dark:from-primary dark:to-blue-500 rounded-2xl p-12 md:p-20 text-center">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0 bg-grid-slate-900/[0.04] dark:bg-grid-slate-100/[0.03]" />
-          </div>
+        <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-500 to-cyan-500 dark:from-indigo-700 dark:via-indigo-600 dark:to-cyan-600 rounded-3xl p-12 md:p-20 text-center">
           <div className="relative">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to Transform Your Productivity?
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              Your future is built from ordinary days.
             </h2>
-            <p className="text-lg text-blue-50 max-w-2xl mx-auto mb-8">
-              Join hundreds of users tracking their lives and achieving their goals with Life Tracker.
+            <p className="text-lg text-indigo-50 max-w-2xl mx-auto mb-8">
+              Connect your intentions to your actions. Track your focus. Reflect on your progress. Build your future intentionally.
             </p>
             <div className="flex flex-col md:flex-row gap-4 justify-center">
               <button
                 onClick={() => navigate('/register')}
-                className="px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-slate-100 transition-colors"
+                className="px-8 py-4 bg-white text-indigo-600 font-bold rounded-lg hover:bg-slate-100 transition-colors text-base"
               >
-                Create Free Account
+                Start Your Journey
               </button>
               <button
                 onClick={() => navigate('/login')}
-                className="px-8 py-3 bg-blue-500/30 text-white font-semibold rounded-lg border border-blue-400/50 hover:bg-blue-500/50 transition-colors"
+                className="px-8 py-4 bg-indigo-500/30 text-white font-bold rounded-lg border border-white/30 hover:bg-indigo-500/50 transition-colors text-base"
               >
-                Sign In
+                Already a user?
               </button>
             </div>
           </div>
@@ -458,68 +545,7 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 dark:bg-slate-950 text-slate-400 border-t border-slate-800 mt-20">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            {/* Brand */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Target className="w-5 h-5 text-white" />
-                </div>
-                <span className="font-bold text-white">Life Tracker</span>
-              </div>
-              <p className="text-sm">
-                Track your life, master your goals.
-              </p>
-            </div>
-
-            {/* Product */}
-            <div>
-              <h4 className="font-semibold text-white mb-3">Product</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-              </ul>
-            </div>
-
-            {/* Resources */}
-            <div>
-              <h4 className="font-semibold text-white mb-3">Resources</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Support</a></li>
-              </ul>
-            </div>
-
-            {/* Social */}
-            <div>
-              <h4 className="font-semibold text-white mb-3">Follow Us</h4>
-              <div className="flex gap-4">
-                <a href="#" className="hover:text-white transition-colors">
-                  <Github className="w-5 h-5" />
-                </a>
-                <a href="#" className="hover:text-white transition-colors">
-                  <Twitter className="w-5 h-5" />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-800 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-sm">© 2026 Life Tracker. All rights reserved.</p>
-              <div className="flex gap-6 mt-4 md:mt-0 text-sm">
-                <a href="#" className="hover:text-white transition-colors">Privacy</a>
-                <a href="#" className="hover:text-white transition-colors">Terms</a>
-                <a href="#" className="hover:text-white transition-colors">Contact</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

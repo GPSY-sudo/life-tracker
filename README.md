@@ -1,10 +1,12 @@
-# Life Tracker V1
+# MiraiThread
 
-A comprehensive personal productivity and life tracking application designed to help users track daily activities, manage tasks, maintain focused work sessions, and reflect on their personal growth through journaling. Everything in one intuitive, beautiful interface.
+**Connect your days. Shape your future.**
+
+A comprehensive personal productivity and reflection platform that weaves together your tasks, activities, focus sessions, diary entries, and insights into one connected view of your life. Everything in one intuitive, beautiful interface.
 
 ## 🎯 Overview
 
-Life Tracker V1 is a full-stack web application that combines activity tracking, task management, pomodoro-style focus sessions, and journaling into a unified productivity system. Built with modern React and Node.js, it provides real-time synchronization, beautiful analytics, and a seamless user experience across desktop and mobile devices.
+MiraiThread is a full-stack web application that connects your daily intentions with your actions, focus, reflections, and progress. Built with modern React and Node.js, it provides real-time synchronization, beautiful analytics, and a seamless user experience across desktop and mobile devices. Your future is built from intentional days.
 
 **Status:** Production-Ready | Feature-Complete | V1 Code-Frozen
 
@@ -56,7 +58,7 @@ Manage focused work periods with the Pomodoro Technique.
   - Associate sessions with specific activities or tasks
   - Track focus time daily, weekly, and monthly
 - **Persistent Timer**: Timer state persists across page refreshes and navigation
-- **Native Notifications**: Browser notifications with title "Life Tracker" and session status
+- **Native Notifications**: Browser notifications with title "MiraiThread" and session status
   - Focus started → Short break triggered → Ready for next session
   - No duplicate notifications
 - **Sound Integration**: Optional ambient sounds during focus sessions (volume controls per sound)
@@ -257,7 +259,7 @@ Node.js + Express + MongoDB + Mongoose
 
 3. **Create `.env` file**
    ```bash
-   MONGODB_URI=mongodb://localhost:27017/life-tracker
+   MONGODB_URI=mongodb://localhost:27017/miraithread
    JWT_SECRET=your_jwt_secret_key
    PORT=5000
    NODE_ENV=development
@@ -291,7 +293,7 @@ Then open `http://localhost:5173` in your browser and register a new account.
 - ✅ Task management (CRUD, Kanban view, list view)
 - ✅ Pomodoro timer (25/5/15 minutes default, configurable)
 - ✅ Focus session persistence across page refreshes and navigation
-- ✅ Notifications with correct title ("Life Tracker") and no duplicates
+- ✅ Notifications with correct title ("MiraiThread") and no duplicates
 - ✅ Diary with mood tracking (5 levels) and word count analytics
 - ✅ Comprehensive analytics (activities, tasks, focus, diary)
 - ✅ Authentication (register, login, change password, delete profile)

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { List, Columns, Plus } from 'lucide-react';
-import { useTasks, loadTasksFromAPI, syncTaskToState } from '@/hooks/useAppData';
+import { useTasks, loadTasksFromAPI, loadActivitiesFromAPI, syncTaskToState } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/useToast';
 import { taskService } from '@/services/taskService';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -21,12 +21,17 @@ export function TasksPage() {
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus | undefined>(undefined);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
 
-  // Load tasks on mount
+  // Load tasks and activities on mount
   useEffect(() => {
-    loadTasksFromAPI().catch((err) => {
-      console.error('Failed to load tasks:', err);
-      toast('Failed to load tasks', 'error');
-    });
+    Promise.all([
+      loadActivitiesFromAPI().catch(() => {
+        // Silently fail — activities may already be loaded
+      }),
+      loadTasksFromAPI().catch((err) => {
+        console.error('Failed to load tasks:', err);
+        toast('Failed to load tasks', 'error');
+      }),
+    ]);
   }, [toast]);
 
   const handleEditTask = (task: Task) => {

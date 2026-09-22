@@ -172,14 +172,28 @@ export function DashboardPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      {/* Greeting — always show */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-ink dark:text-slate-100">
-          {getGreeting(user?.name)}
-        </h1>
-        <p className="text-sm text-ink-muted dark:text-slate-400 mt-1">
-          {formatDate(new Date())}
-        </p>
+      {/* Greeting with MiraiThread Branding */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between md:gap-8">
+        {/* Left: Greeting */}
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-ink dark:text-slate-100">
+            {getGreeting(user?.name)}
+          </h1>
+          <p className="text-sm text-ink-muted dark:text-slate-400 mt-1">
+            {formatDate(new Date())}
+          </p>
+        </div>
+        
+        {/* Right: MiraiThread Branding */}
+        <div className="mt-4 md:mt-0 md:text-right flex md:flex-col md:items-end gap-2 md:gap-1">
+          <div className="flex items-center gap-2 md:justify-end">
+            <img src="/miraithread-icon.png" alt="MiraiThread" className="h-8 w-8" />
+            <span className="text-base font-bold text-slate-900 dark:text-slate-100">MiraiThread</span>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-400 md:text-right">
+            Connect your days. Shape your future.
+          </p>
+        </div>
       </div>
 
       {/* Loading State */}

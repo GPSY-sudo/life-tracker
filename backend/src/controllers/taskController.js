@@ -73,7 +73,8 @@ export const updateTask = async (req, res, next) => {
     if (status !== undefined) task.status = status;
     if (reminder !== undefined) task.reminder = reminder;
     if (recurrence !== undefined) task.recurrence = recurrence;
-    if (activityId !== undefined) task.activityId = activityId;
+    // Allow activityId to be cleared by checking the request body directly
+    if ('activityId' in req.body) task.activityId = req.body.activityId;
     if (tags !== undefined) task.tags = tags;
 
     const updatedTask = await task.save();

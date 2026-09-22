@@ -41,10 +41,7 @@ export function MobileMenu() {
         className="md:hidden flex items-center gap-2 px-3 py-2 rounded-xl text-ink dark:text-slate-200"
         aria-label="Open menu"
       >
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-          <Target className="w-5 h-5 text-white" />
-        </div>
-        <span className="font-bold">Life Tracker</span>
+        <img src="/miraithread-icon.png" alt="MiraiThread" className="h-6 w-6" />
       </button>
 
       {open && (
@@ -58,10 +55,7 @@ export function MobileMenu() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Target className="w-5 h-5 text-white" />
-                </div>
-                <span className="font-bold text-ink dark:text-slate-100">Life Tracker</span>
+                <img src="/miraithread-icon.png" alt="MiraiThread" className="h-6 w-6" />
               </div>
               <button onClick={() => setOpen(false)} aria-label="Close menu">
                 <X className="w-5 h-5 text-ink-muted dark:text-slate-400" />

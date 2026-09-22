@@ -216,7 +216,7 @@ export function ActivityForm({ open, onClose, onSubmit, activity, year, month }:
           <div className="space-y-2">
             <div className="flex items-start gap-2 p-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded text-xs text-amber-900 dark:text-amber-200">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>⚠️ Pauses are permanent history. They record that this activity was intentionally paused during this period and cannot be deleted.</span>
+              <span>⚠️ Pauses are permanent history. After adding a pause, click 'Add Pause' and then 'Save Changes' to permanently record it. Saved pauses cannot be deleted.</span>
             </div>
             {getVisiblePauses().map((pause, idx) => (
               <div key={idx} className="p-2 bg-slate-50 dark:bg-slate-900/30 rounded text-sm">

@@ -221,6 +221,7 @@ export interface DiaryAnalytics {
   daysWithEntries: number;
   diaryStreak: number;
   monthlyCount: number;
+  diaryConsistency: number;
 }
 
 export interface MonthlyAnalytics {

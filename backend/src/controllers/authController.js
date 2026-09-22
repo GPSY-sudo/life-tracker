@@ -11,12 +11,37 @@ import generateToken from '../utils/generateToken.js';
 // @route   POST /api/auth/register
 export const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    let { name, email, password } = req.body;
+
+    // Trim text fields
+    if (typeof name === 'string') name = name.trim();
+    if (typeof email === 'string') email = email.trim();
+    if (typeof password === 'string') password = password.trim();
+
+    // Validate name (required, non-empty after trim)
+    if (!name) {
+      res.status(400);
+      throw new Error('Name is required');
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      res.status(400);
+      throw new Error('Please provide a valid email address');
+    }
+
+    // Validate password minimum length
+    if (!password || password.length < 6) {
+      res.status(400);
+      throw new Error('Password must be at least 6 characters');
+    }
+
     const userExists = await User.findOne({ email });
 
     if (userExists) {
       res.status(400);
-      throw new Error('User already exists');
+      throw new Error('An account with this email already exists');
     }
 
     const user = await User.create({ name, email, password });
