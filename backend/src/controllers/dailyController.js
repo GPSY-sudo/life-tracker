@@ -67,6 +67,13 @@ export const updateActivityStatus = async (req, res, next) => {
     const activityId = req.params.activityId;
     const { status } = req.body;
 
+    // Validate status is one of the allowed enum values if provided
+    const validStatuses = ['partial', 'completed', 'incomplete'];
+    if (status !== undefined && status !== null && !validStatuses.includes(status)) {
+      res.status(400);
+      throw new Error('Invalid status. Must be one of: partial, completed, incomplete');
+    }
+
     let record = await DailyRecord.findOne({ userId: req.user._id, date });
     
     if (!record) {

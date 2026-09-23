@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Target, Eye, EyeOff } from 'lucide-react';
 import { authService } from '@/services/authService';
 import { useAuth } from '@/context/AuthContext';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { LandingFooter } from '@/components/layout/LandingFooter';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -30,15 +32,10 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-surface-dark px-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <Target className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-2xl font-bold text-ink dark:text-slate-100">Life Tracker</span>
-        </div>
+    <div className="min-h-screen bg-surface dark:bg-surface-dark flex flex-col">
+      <PublicNavbar />
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm">
 
         <div className="bg-surface-card dark:bg-surface-dark-card rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
           <h1 className="text-xl font-semibold text-ink dark:text-slate-100 mb-1">Welcome back</h1>
@@ -104,13 +101,15 @@ export function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-ink-muted dark:text-slate-400 mt-4">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-primary hover:underline font-medium">
-            Create one
-          </Link>
-        </p>
+          <p className="text-center text-sm text-ink-muted dark:text-slate-400 mt-4">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-primary hover:underline font-medium">
+              Create one
+            </Link>
+          </p>
+        </div>
       </div>
+      <LandingFooter />
     </div>
   );
 }

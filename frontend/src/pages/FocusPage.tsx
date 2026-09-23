@@ -6,6 +6,8 @@ import { useActivities, useTasks, useFocusSessions, useSettings, loadFocusSessio
 import { SoundMixer } from '@/components/SoundMixer';
 import { audioService } from '@/services/audioService';
 import { focusService } from '@/services/focusService';
+import { store } from '@/services/store';
+import { loadPomodoroStateFromStorage } from '@/utils/pomodoroStorage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { formatTime, formatDuration, formatSessionDuration, todayISO, formatTimeFromDate } from '@/utils/date';
 import type { PomodoroMode, SoundId } from '@/types';
@@ -17,8 +19,34 @@ export function FocusPage() {
   const settings = useSettings();
   const presets = useSoundPresets();
 
-  const [focusActivityId, setFocusActivityId] = useState<string>('');
-  const [focusTaskId, setFocusTaskId] = useState<string>('');
+  // Restore focus target from persisted Pomodoro state on mount
+  // Use same pattern as usePomodoro: localStorage (browser refresh) → store (navigation)
+  const getInitialFocusState = () => {
+    // Try localStorage first (browser refresh case)
+    const storedStateFromStorage = loadPomodoroStateFromStorage();
+    if (storedStateFromStorage?.isRunning || (storedStateFromStorage?.sessionStartTime && !storedStateFromStorage?.isRunning)) {
+      return {
+        activityId: storedStateFromStorage.focusActivityId ?? '',
+        taskId: storedStateFromStorage.focusTaskId ?? '',
+      };
+    }
+    
+    // Fall back to in-memory store (navigation case)
+    const storedStateFromStore = store.getActivePomodoroState();
+    if (storedStateFromStore?.isRunning || (storedStateFromStore?.sessionStartTime && !storedStateFromStore?.isRunning)) {
+      return {
+        activityId: storedStateFromStore.focusActivityId ?? '',
+        taskId: storedStateFromStore.focusTaskId ?? '',
+      };
+    }
+    
+    // No active session
+    return { activityId: '', taskId: '' };
+  };
+
+  const initial = getInitialFocusState();
+  const [focusActivityId, setFocusActivityId] = useState<string>(initial.activityId);
+  const [focusTaskId, setFocusTaskId] = useState<string>(initial.taskId);
 
   // Get tasks related to the selected activity
   const getTasksForActivity = (activityId: string) => {

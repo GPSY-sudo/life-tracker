@@ -63,7 +63,7 @@ export function TaskForm({ open, onClose, onSubmit, task, defaultStatus }: TaskF
       priority,
       status,
       recurrence,
-      activityId: activityId || undefined,
+      activityId: activityId || null,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
     });
     onClose();

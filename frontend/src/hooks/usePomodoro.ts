@@ -353,7 +353,7 @@ export function usePomodoro(focusTarget?: { activityId?: string; taskId?: string
           const notificationMessage = wasFocus
             ? 'Focus session ended. Take a break!'
             : 'Break ended. Ready to restart your focus session?';
-          showNotification('Life Tracker', { body: notificationMessage });
+          showNotification('MiraiThread', { body: notificationMessage });
         }
         
         transition(true);

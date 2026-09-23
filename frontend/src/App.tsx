@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { ScrollToTop } from '@/components/layout/ScrollToTop';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ToastProvider } from '@/hooks/useToast';
 import { useTheme } from '@/hooks/useAppData';
@@ -28,7 +29,6 @@ function AppContent() {
   return (
     <Routes>
       {/* Public routes — no layout, no auth required */}
-      <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
@@ -74,6 +74,7 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <ToastProvider>
         <ThemeApplier />
         {/* AuthProvider must be inside BrowserRouter so it can call useNavigate */}
