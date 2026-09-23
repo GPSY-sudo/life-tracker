@@ -7,8 +7,7 @@
  *   Reading/writing/clearing the token is only done here and in
  *   AuthContext — nowhere else in the codebase should touch storage.
  */
-
-const BASE_URL = '/api';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 const TOKEN_KEY = 'lt_token';
 
 // ── Token helpers (package-private — used only by this module and AuthContext) ──
