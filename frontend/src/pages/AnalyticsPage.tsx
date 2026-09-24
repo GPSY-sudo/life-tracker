@@ -67,13 +67,13 @@ export function AnalyticsPage() {
       <PageHeader title="Analytics" subtitle="Track your progress over time" />
 
       {/* Month selector */}
-      <div className="flex items-center gap-2 mb-4">
-        <select className="input py-1.5 text-sm w-auto" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 w-full">
+        <select className="input py-1.5 text-xs sm:text-sm flex-1 sm:flex-initial" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
           {Array.from({ length: 12 }, (_, i) => (
             <option key={i} value={i}>{getMonthName(i)}</option>
           ))}
         </select>
-        <select className="input py-1.5 text-sm w-auto" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+        <select className="input py-1.5 text-xs sm:text-sm flex-1 sm:flex-initial" value={year} onChange={(e) => setYear(Number(e.target.value))}>
           {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map((y) => (
             <option key={y} value={y}>{y}</option>
           ))}
@@ -81,12 +81,12 @@ export function AnalyticsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1">
+      <div className="flex gap-1 mb-4 sm:mb-6 overflow-x-auto pb-2 sm:pb-1 -mx-4 sm:mx-0 px-4 sm:px-0">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors min-w-max ${
               tab === t.id ? 'bg-primary text-white' : 'bg-slate-100 text-ink-muted dark:bg-slate-700 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
             }`}
           >
@@ -123,60 +123,62 @@ function OverviewTab({ analytics }: { analytics: MonthlyAnalytics }) {
   return (
     <div className="space-y-4">
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card p-4">
-          <p className="text-xs text-ink-muted dark:text-slate-400 mb-1">Overall Completion</p>
-          <p className="text-2xl font-bold text-ink dark:text-slate-100">{analytics.overallCompletion}%</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+        <div className="card p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-400 mb-1">Overall Completion</p>
+          <p className="text-lg sm:text-2xl font-bold text-ink dark:text-slate-100">{analytics.overallCompletion}%</p>
           {analytics.improvement !== 0 && (
-            <div className={`flex items-center gap-1 text-xs mt-1 ${analytics.improvement > 0 ? 'text-success-text dark:text-green-400' : 'text-danger-text dark:text-red-400'}`}>
-              {analytics.improvement > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            <div className={`flex items-center gap-1 text-[10px] sm:text-xs mt-1 ${analytics.improvement > 0 ? 'text-success-text dark:text-green-400' : 'text-danger-text dark:text-red-400'}`}>
+              {analytics.improvement > 0 ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
               {analytics.improvement > 0 ? '+' : ''}{analytics.improvement}% vs last month
             </div>
           )}
         </div>
-        <div className="card p-4">
-          <p className="text-xs text-ink-muted dark:text-slate-400 mb-1">Active Days</p>
-          <p className="text-2xl font-bold text-ink dark:text-slate-100">{analytics.activeDays}</p>
+        <div className="card p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-400 mb-1">Active Days</p>
+          <p className="text-lg sm:text-2xl font-bold text-ink dark:text-slate-100">{analytics.activeDays}</p>
         </div>
-        <div className="card p-4">
-          <p className="text-xs text-ink-muted dark:text-slate-400 mb-1">Fully Completed</p>
-          <p className="text-2xl font-bold text-ink dark:text-slate-100">{analytics.fullyCompletedDays}</p>
+        <div className="card p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-400 mb-1">Fully Completed</p>
+          <p className="text-lg sm:text-2xl font-bold text-ink dark:text-slate-100">{analytics.fullyCompletedDays}</p>
         </div>
-        <div className="card p-4">
-          <p className="text-xs text-ink-muted dark:text-slate-400 mb-1">Consistency</p>
-          <p className="text-2xl font-bold text-ink dark:text-slate-100">{analytics.consistencyScore}%</p>
+        <div className="card p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-400 mb-1">Consistency</p>
+          <p className="text-lg sm:text-2xl font-bold text-ink dark:text-slate-100">{analytics.consistencyScore}%</p>
         </div>
       </div>
 
       {/* Previous month comparison */}
-      <div className="card p-5">
-        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Month Comparison</h3>
-        <div className="grid grid-cols-2 gap-6">
+      <div className="card p-4 sm:p-5">
+        <h3 className="text-xs sm:text-sm font-semibold text-ink dark:text-slate-200 mb-4">Month Comparison</h3>
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           <div>
-            <p className="text-xs text-ink-muted dark:text-slate-400 mb-1">This Month</p>
-            <p className="text-3xl font-bold text-primary dark:text-primary-300">{analytics.overallCompletion}%</p>
+            <p className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-400 mb-1">This Month</p>
+            <p className="text-2xl sm:text-3xl font-bold text-primary dark:text-primary-300">{analytics.overallCompletion}%</p>
             <ProgressBar value={analytics.overallCompletion} color="primary" size="sm" />
           </div>
           <div>
-            <p className="text-xs text-ink-muted dark:text-slate-400 mb-1">Previous Month</p>
-            <p className="text-3xl font-bold text-ink-muted dark:text-slate-400">{analytics.previousMonthCompletion}%</p>
+            <p className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-400 mb-1">Previous Month</p>
+            <p className="text-2xl sm:text-3xl font-bold text-ink-muted dark:text-slate-400">{analytics.previousMonthCompletion}%</p>
             <ProgressBar value={analytics.previousMonthCompletion} color="primary" size="sm" />
           </div>
         </div>
       </div>
 
       {/* Daily completion chart */}
-      <div className="card p-5">
-        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Daily Activity Completion</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={analytics.dailyCompletion.map((d) => ({ date: d.date.slice(8), rate: d.rate }))}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
-            <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-            <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" domain={[0, 100]} />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} />
-            <Line type="monotone" dataKey="rate" stroke="#3B82F6" strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="card p-4 sm:p-5 overflow-x-auto">
+        <h3 className="text-xs sm:text-sm font-semibold text-ink dark:text-slate-200 mb-4">Daily Activity Completion</h3>
+        <div className="w-full min-h-[200px] sm:min-h-[250px]">
+          <ResponsiveContainer width="100%" height={typeof window !== 'undefined' && window.innerWidth < 640 ? 200 : 250}>
+            <LineChart data={analytics.dailyCompletion.map((d) => ({ date: d.date.slice(8), rate: d.rate }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#94a3b8" />
+              <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" domain={[0, 100]} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} />
+              <Line type="monotone" dataKey="rate" stroke="#3B82F6" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
@@ -190,46 +192,53 @@ function TrendsTab({ analytics, year }: { analytics: MonthlyAnalytics; year: num
   }, [year]);
 
   const weekDays = analytics.dailyCompletion.slice(0, 7);
+  const chartHeight = typeof window !== 'undefined' && window.innerWidth < 640 ? 200 : 250;
 
   return (
     <div className="space-y-4">
-      <div className="card p-5">
-        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Monthly Completion (This Year)</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={yearlyData.map((d) => ({ month: getMonthName(d.month).slice(0, 3), completion: d.completion }))}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-            <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" domain={[0, 100]} label={{ value: 'Completion %', angle: -90, position: 'insideLeft' }} />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} formatter={(value: any) => `${value}%`} />
-            <Bar dataKey="completion" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="card p-4 sm:p-5 overflow-x-auto">
+        <h3 className="text-xs sm:text-sm font-semibold text-ink dark:text-slate-200 mb-4">Monthly Completion (This Year)</h3>
+        <div className="w-full min-h-[200px] sm:min-h-[250px]">
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <BarChart data={yearlyData.map((d) => ({ month: getMonthName(d.month).slice(0, 3), completion: d.completion }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
+              <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="#94a3b8" />
+              <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" domain={[0, 100]} label={{ value: 'Completion %', angle: -90, position: 'insideLeft' }} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} formatter={(value: any) => `${value}%`} />
+              <Bar dataKey="completion" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div className="card p-5">
-        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Monthly Focus Time (This Year)</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={yearlyData.map((d) => ({ month: getMonthName(d.month).slice(0, 3), focus: d.focusMinutes }))}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-            <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" label={{ value: 'Focus (min)', angle: -90, position: 'insideLeft' }} />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} formatter={(value: any) => formatSessionDuration(value)} />
-            <Bar dataKey="focus" fill="#22C55E" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="card p-4 sm:p-5 overflow-x-auto">
+        <h3 className="text-xs sm:text-sm font-semibold text-ink dark:text-slate-200 mb-4">Monthly Focus Time (This Year)</h3>
+        <div className="w-full min-h-[200px] sm:min-h-[250px]">
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <BarChart data={yearlyData.map((d) => ({ month: getMonthName(d.month).slice(0, 3), focus: d.focusMinutes }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
+              <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="#94a3b8" />
+              <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" label={{ value: 'Focus (min)', angle: -90, position: 'insideLeft' }} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} formatter={(value: any) => formatSessionDuration(value)} />
+              <Bar dataKey="focus" fill="#22C55E" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div className="card p-5">
-        <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-4">Daily Completion Trend</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={analytics.dailyCompletion.map((d) => ({ date: d.date.slice(8), rate: d.rate }))}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
-            <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-            <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" domain={[0, 100]} />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} />
-            <Line type="monotone" dataKey="rate" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="card p-4 sm:p-5 overflow-x-auto">
+        <h3 className="text-xs sm:text-sm font-semibold text-ink dark:text-slate-200 mb-4">Daily Completion Trend</h3>
+        <div className="w-full min-h-[200px] sm:min-h-[250px]">
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <LineChart data={analytics.dailyCompletion.map((d) => ({ date: d.date.slice(8), rate: d.rate }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#94a3b8" />
+              <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" domain={[0, 100]} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} />
+              <Line type="monotone" dataKey="rate" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
@@ -245,21 +254,21 @@ function ActivitiesTab({ analytics }: { analytics: MonthlyAnalytics }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         {best && (
-          <div className="card p-4">
+          <div className="card p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Award className="w-4 h-4 text-success" />
-              <span className="text-xs font-medium text-ink-muted dark:text-slate-400">Best Activity</span>
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-success" />
+              <span className="text-[10px] sm:text-xs font-medium text-ink-muted dark:text-slate-400">Best Activity</span>
             </div>
-            <p className="text-lg font-bold text-ink dark:text-slate-100">{best.activityName}</p>
-            <p className="text-sm text-success-text dark:text-green-400">{best.completionRate}% completion</p>
+            <p className="text-base sm:text-lg font-bold text-ink dark:text-slate-100">{best.activityName}</p>
+            <p className="text-xs sm:text-sm text-success-text dark:text-green-400">{best.completionRate}% completion</p>
           </div>
         )}
         {!best && (
-          <div className="card p-4">
+          <div className="card p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Award className="w-4 h-4 text-slate-400" />
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
               <span className="text-xs font-medium text-ink-muted dark:text-slate-400">Best Activity</span>
             </div>
             <p className="text-sm text-ink-muted dark:text-slate-400">No completed activities yet</p>

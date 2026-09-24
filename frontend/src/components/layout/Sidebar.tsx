@@ -28,10 +28,18 @@ export function Sidebar() {
 
   return (
     <aside className="hidden md:flex flex-col w-64 shrink-0 h-screen sticky top-0 border-r border-slate-200 dark:border-slate-700 bg-surface-card dark:bg-surface-dark-card p-4">
-      <div className="flex items-center gap-2.5 px-3 py-4 mb-2">
+      <div className="flex items-center gap-2.5 px-3 py-4 mb-6">
         <img src="/miraithread-icon.png" alt="MiraiThread" className="h-6 w-6 flex-shrink-0" />
         <span className="text-lg font-bold text-slate-100">MiraiThread</span>
       </div>
+
+      {/* Logged-in Username */}
+      {user && (
+        <p className="text-xs text-ink dark:text-slate-200 px-3 py-2 truncate mb-3 font-medium" title={user.email}>
+          {user.name}
+        </p>
+      )}
+
       <nav className="flex flex-col gap-1 flex-1">
         {navItems.map((item) => (
           <NavLink
@@ -44,13 +52,8 @@ export function Sidebar() {
             <span>{item.label}</span>
           </NavLink>
         ))}
-      </nav>
-      <div className="flex flex-col gap-2 px-3 py-2">
-        {user && (
-          <p className="text-xs text-ink-muted dark:text-slate-500 truncate" title={user.email}>
-            {user.name}
-          </p>
-        )}
+
+        {/* Logout as part of navigation */}
         <button
           onClick={logout}
           className="btn btn-ghost justify-start gap-2 w-full text-sm px-0"
@@ -59,7 +62,7 @@ export function Sidebar() {
           <LogOut className="w-4 h-4" />
           Log out
         </button>
-      </div>
+      </nav>
     </aside>
   );
 }

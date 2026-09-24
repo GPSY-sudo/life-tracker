@@ -93,7 +93,7 @@ export function TaskForm({ open, onClose, onSubmit, task, defaultStatus }: TaskF
             placeholder="Add details about this task..."
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label" htmlFor="task-due-date">Due Date</label>
             <input
@@ -115,7 +115,7 @@ export function TaskForm({ open, onClose, onSubmit, task, defaultStatus }: TaskF
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label" htmlFor="task-priority">Priority</label>
             <select
@@ -144,7 +144,7 @@ export function TaskForm({ open, onClose, onSubmit, task, defaultStatus }: TaskF
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label" htmlFor="task-recurrence">Recurrence</label>
             <select
@@ -185,12 +185,12 @@ export function TaskForm({ open, onClose, onSubmit, task, defaultStatus }: TaskF
             placeholder="e.g. college, ml, important"
           />
         </div>
-        {error && <p className="text-sm text-danger-text dark:text-red-400">{error}</p>}
-        <div className="flex gap-3 justify-end pt-2">
-          <button type="button" className="btn-ghost px-4" onClick={onClose}>
+        {error && <p className="text-xs sm:text-sm text-danger-text dark:text-red-400">{error}</p>}
+        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end pt-2">
+          <button type="button" className="btn-ghost px-3 sm:px-4 py-2 text-xs sm:text-sm" onClick={onClose}>
             Cancel
           </button>
-          <button type="submit" className="btn-primary px-4">
+          <button type="submit" className="btn-primary px-3 sm:px-4 py-2 text-xs sm:text-sm">
             {task ? 'Save Changes' : 'Add Task'}
           </button>
         </div>

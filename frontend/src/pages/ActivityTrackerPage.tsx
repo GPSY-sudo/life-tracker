@@ -323,32 +323,32 @@ export function ActivityTrackerPage() {
       />
 
       {/* Month Navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <button onClick={prevMonth} className="btn-ghost px-2" aria-label="Previous month">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button onClick={prevMonth} className="btn-ghost px-2 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Previous month">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h2 className="text-lg font-semibold text-ink dark:text-slate-100 min-w-[180px] text-center">
+          <h2 className="text-base sm:text-lg font-semibold text-ink dark:text-slate-100 text-center flex-shrink-0 px-2">
             {formatMonthYear(year, month)}
           </h2>
-          <button onClick={nextMonth} className="btn-ghost px-2" aria-label="Next month">
+          <button onClick={nextMonth} className="btn-ghost px-2 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Next month">
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
-            className="input py-1.5 text-sm w-auto"
+            className="input py-1.5 text-xs sm:text-sm flex-1 sm:flex-initial"
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
           >
             {Array.from({ length: 12 }, (_, i) => (
               <option key={i} value={i}>
-                {new Date(2000, i, 1).toLocaleDateString('en-US', { month: 'long' })}
+                {new Date(2000, i, 1).toLocaleDateString('en-US', { month: 'short' })}
               </option>
             ))}
           </select>
           <select
-            className="input py-1.5 text-sm w-auto"
+            className="input py-1.5 text-xs sm:text-sm flex-1 sm:flex-initial"
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
           >
@@ -572,7 +572,7 @@ export function ActivityTrackerPage() {
                     )}
                   </div>
                   {/* Days grid */}
-                  <div className="grid grid-cols-7 gap-1">
+                  <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
                     {monthDates.map((date) => {
                       const status = getActivityStatus(date, activity);
                       const isInactive = !isDateApplicable(date, activity);
@@ -584,20 +584,20 @@ export function ActivityTrackerPage() {
                           onClick={() => handleCellClick(date, activity)}
                           disabled={isFuture || isInactive}
                           className={`
-                            aspect-square rounded-lg flex flex-col items-center justify-center text-xs transition-colors
+                            aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] sm:text-xs transition-colors min-h-[32px] sm:min-h-[40px]
                             ${isInactive || isFuture ? 'opacity-30' : 'active:scale-95'}
                             ${status === 'completed' ? 'bg-success-soft dark:bg-green-900/30 text-success-text dark:text-green-400' : ''}
                             ${status === 'partial' ? 'bg-warning-soft dark:bg-amber-900/30 text-warning-text dark:text-amber-400' : ''}
                             ${status === 'incomplete' ? 'bg-danger-soft dark:bg-red-900/30 text-danger-text dark:text-red-400' : ''}
-                            ${!status && !isInactive && !isFuture ? 'bg-slate-50 dark:bg-slate-700/30 text-ink-light dark:text-slate-500' : ''}
+                            ${!status && !isInactive && !isFuture ? 'bg-slate-50 dark:bg-slate-700/30 text-ink-light dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/50' : ''}
                             ${date === todayStr ? 'ring-1 ring-primary' : ''}
                           `}
                           aria-label={`${activity.name} day ${dayNum}: ${status ?? 'not recorded'}`}
                         >
-                          <span className="text-[10px]">{dayNum}</span>
-                          {status === 'completed' && <Check className="w-3 h-3" />}
-                          {status === 'partial' && <CircleDashed className="w-3 h-3" />}
-                          {status === 'incomplete' && <X className="w-3 h-3" />}
+                          <span className="font-medium">{dayNum}</span>
+                          {status === 'completed' && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+                          {status === 'partial' && <CircleDashed className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+                          {status === 'incomplete' && <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
                         </button>
                       );
                     })}
@@ -608,33 +608,31 @@ export function ActivityTrackerPage() {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 mt-4 text-xs text-ink-muted dark:text-slate-400">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-4 text-[11px] sm:text-xs text-ink-muted dark:text-slate-400">
             <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded bg-warning-soft dark:bg-amber-900/30 flex items-center justify-center">
-                <CircleDashed className="w-2.5 h-2.5 text-warning-text dark:text-amber-400" />
+              <span className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-warning-soft dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                <CircleDashed className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-warning-text dark:text-amber-400" />
               </span>
               Partial
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded bg-success-soft dark:bg-green-900/30 flex items-center justify-center">
-                <Check className="w-2.5 h-2.5 text-success-text dark:text-green-400" />
+              <span className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-success-soft dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                <Check className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-success-text dark:text-green-400" />
               </span>
               Completed
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded bg-danger-soft dark:bg-red-900/30 flex items-center justify-center">
-                <X className="w-2.5 h-2.5 text-danger-text dark:text-red-400" />
+              <span className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-danger-soft dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                <X className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-danger-text dark:text-red-400" />
               </span>
               Incomplete
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                <Minus className="w-2.5 h-2.5 text-ink-light dark:text-slate-500" />
-              </span>
+              <span className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-slate-100 dark:bg-slate-700 flex-shrink-0" />
               Not recorded
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded opacity-30 bg-slate-100 dark:bg-slate-700" />
+              <span className="w-3 h-3 sm:w-4 sm:h-4 rounded opacity-30 bg-slate-100 dark:bg-slate-700 flex-shrink-0" />
               Inactive
             </span>
           </div>

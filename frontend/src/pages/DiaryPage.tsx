@@ -132,19 +132,19 @@ export function DiaryPage() {
     <div className="p-4 md:p-8 max-w-5xl mx-auto">
       <PageHeader title="Diary" subtitle="Write about your day" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 sm:gap-6">
         {/* Main diary editor */}
         <div>
           {/* Date navigation */}
           <div className="flex items-center justify-between mb-4">
-            <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="btn-ghost px-3" aria-label="Previous day">
+            <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="btn-ghost px-2 sm:px-3 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Previous day">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <div className="text-center">
-              <h2 className="text-lg font-semibold text-ink dark:text-slate-100">{formatDate(selectedDate)}</h2>
-              <p className="text-sm text-ink-muted dark:text-slate-400">{getDayName(selectedDate)}</p>
+            <div className="text-center flex-1">
+              <h2 className="text-base sm:text-lg font-semibold text-ink dark:text-slate-100">{formatDate(selectedDate)}</h2>
+              <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400">{getDayName(selectedDate)}</p>
             </div>
-            <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="btn-ghost px-3" aria-label="Next day">
+            <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="btn-ghost px-2 sm:px-3 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Next day">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
@@ -166,8 +166,8 @@ export function DiaryPage() {
             ) : (
               <>
                 <div className="mb-4">
-                  <p className="text-sm font-medium text-ink dark:text-slate-200 mb-2">How was your day?</p>
-                  <div className="flex flex-wrap gap-2 mb-2">
+                  <p className="text-xs sm:text-sm font-medium text-ink dark:text-slate-200 mb-2">How was your day?</p>
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2">
                     {[
                       { value: 'great', emoji: '😄', label: 'Great' },
                       { value: 'good', emoji: '🙂', label: 'Good' },
@@ -178,28 +178,28 @@ export function DiaryPage() {
                       <button
                         key={value}
                         onClick={() => setDiaryMood(diaryMood === value ? undefined : (value as any))}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                           diaryMood === value
                             ? 'bg-primary text-white'
                             : 'bg-slate-100 dark:bg-slate-700 text-ink-muted dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
                         }`}
                       >
-                        {emoji} {label}
+                        {emoji} <span className="hidden sm:inline">{label}</span>
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-ink-muted dark:text-slate-500">Mood is optional — you can leave it unselected.</p>
+                  <p className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-500">Mood is optional — you can leave it unselected.</p>
                 </div>
                 <textarea
-                  className="input min-h-[200px] resize-y text-sm leading-relaxed"
+                  className="input min-h-[150px] sm:min-h-[200px] resize-y text-xs sm:text-sm leading-relaxed"
                   value={diaryText}
                   onChange={(e) => setDiaryText(e.target.value)}
                   placeholder="Write about your day..."
                   autoFocus
                 />
                 <div className="flex justify-end mt-3">
-                  <button onClick={handleSave} className="btn-primary px-4 py-2 text-sm">
-                    <Save className="w-4 h-4" /> Save Entry
+                  <button onClick={handleSave} className="btn-primary px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                    <Save className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Save Entry</span>
                   </button>
                 </div>
               </>
@@ -208,10 +208,10 @@ export function DiaryPage() {
 
           {/* Day summary */}
           {!isFuture && (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4">
               {/* Activities */}
-              <div className="card p-5">
-                <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-3">Activities</h3>
+              <div className="card p-4 sm:p-5">
+                <h3 className="text-xs sm:text-sm font-semibold text-ink dark:text-slate-200 mb-3">Activities</h3>
                 {activities.length === 0 ? (
                   <p className="text-xs text-ink-muted dark:text-slate-400">No activities tracked.</p>
                 ) : (
@@ -229,7 +229,7 @@ export function DiaryPage() {
                       return (
                         <div key={a.id} className="flex items-center gap-3 p-1.5">
                           <ActivityStatusIcon status={status} size="sm" />
-                          <span className={`text-sm ${status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
+                          <span className={`text-xs sm:text-sm ${status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
                             {a.name}
                           </span>
                         </div>
@@ -240,16 +240,16 @@ export function DiaryPage() {
               </div>
 
               {/* Tasks */}
-              <div className="card p-5">
-                <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-3">Tasks</h3>
+              <div className="card p-4 sm:p-5">
+                <h3 className="text-xs sm:text-sm font-semibold text-ink dark:text-slate-200 mb-3">Tasks</h3>
                 {dayTasks.length === 0 ? (
                   <p className="text-xs text-ink-muted dark:text-slate-400">No tasks due on this day.</p>
                 ) : (
                   <div className="space-y-1">
                     {dayTasks.map((t) => (
                       <div key={t.id} className="flex items-center gap-2 p-1.5">
-                        <span className={`w-2 h-2 rounded-full ${t.status === 'completed' ? 'bg-success' : t.status === 'in_progress' ? 'bg-primary' : t.status === 'blocked' ? 'bg-danger' : 'bg-slate-300 dark:bg-slate-600'}`} />
-                        <span className={`text-sm ${t.status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${t.status === 'completed' ? 'bg-success' : t.status === 'in_progress' ? 'bg-primary' : t.status === 'blocked' ? 'bg-danger' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                        <span className={`text-xs sm:text-sm truncate ${t.status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
                           {t.title}
                         </span>
                       </div>
@@ -259,23 +259,23 @@ export function DiaryPage() {
               </div>
 
               {/* Focus */}
-              <div className="card p-5">
-                <h3 className="text-sm font-semibold text-ink dark:text-slate-200 mb-3">Focus Sessions</h3>
+              <div className="card p-4 sm:p-5">
+                <h3 className="text-xs sm:text-sm font-semibold text-ink dark:text-slate-200 mb-3">Focus Sessions</h3>
                 {dayFocusSessions.length === 0 ? (
                   <p className="text-xs text-ink-muted dark:text-slate-400">No focus sessions on this day.</p>
                 ) : (
                   <div className="space-y-1">
                     {dayFocusSessions.map((s) => (
                       <div key={s.id} className="flex items-center gap-2 text-xs p-1.5">
-                        <span className="text-ink-muted dark:text-slate-400 w-12">{formatTimeFromDate(s.startTime)}</span>
-                        <span className="text-ink dark:text-slate-200 flex-1">
+                        <span className="text-ink-muted dark:text-slate-400 w-12 flex-shrink-0">{formatTimeFromDate(s.startTime)}</span>
+                        <span className="text-ink dark:text-slate-200 flex-1 truncate">
                           {tasks.find((t) => t.id === s.taskId)?.title ?? activities.find((a) => a.id === s.activityId)?.name ?? 'Free focus'}
                         </span>
-                        <span className="text-ink-muted dark:text-slate-400">{formatSessionDuration(s.duration)}</span>
+                        <span className="text-ink-muted dark:text-slate-400 flex-shrink-0">{formatSessionDuration(s.duration)}</span>
                       </div>
                     ))}
                     <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700">
-                      <span className="text-sm font-medium text-ink dark:text-slate-200">
+                      <span className="text-xs sm:text-sm font-medium text-ink dark:text-slate-200">
                         Total: {formatSessionDuration(dayFocusSessions.reduce((s, x) => s + x.duration, 0))}
                       </span>
                     </div>
@@ -287,24 +287,24 @@ export function DiaryPage() {
         </div>
 
         {/* Calendar sidebar */}
-        <div className="card p-4">
+        <div className="card p-3 sm:p-4">
           <div className="flex items-center justify-between mb-3">
-            <button onClick={prevMonth} className="btn-ghost p-1.5" aria-label="Previous month">
+            <button onClick={prevMonth} className="btn-ghost p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Previous month">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm font-semibold text-ink dark:text-slate-200">
-              {new Date(calYear, calMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            <span className="text-xs sm:text-sm font-semibold text-ink dark:text-slate-200 text-center flex-1">
+              {new Date(calYear, calMonth, 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}
             </span>
-            <button onClick={nextMonth} className="btn-ghost p-1.5" aria-label="Next month">
+            <button onClick={nextMonth} className="btn-ghost p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Next month">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <div className="grid grid-cols-7 gap-1 mb-1">
+          <div className="grid grid-cols-7 gap-0.5 mb-1">
             {weekDays.map((d, i) => (
-              <div key={i} className="text-center text-xs text-ink-light dark:text-slate-500 font-medium py-1">{d}</div>
+              <div key={i} className="text-center text-[10px] sm:text-xs text-ink-light dark:text-slate-500 font-medium py-1">{d}</div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5">
             {calendarDays.map((date, i) => {
               if (!date) return <div key={i} />;
               const dayNum = Number(date.split('-')[2]);
@@ -315,25 +315,25 @@ export function DiaryPage() {
                 <button
                   key={date}
                   onClick={() => setSelectedDate(date)}
-                  className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs transition-colors relative ${
+                  className={`aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] sm:text-xs transition-colors relative min-h-[28px] sm:min-h-[32px] ${
                     isSelected ? 'bg-primary text-white' :
                     isToday ? 'bg-primary-50 text-primary dark:bg-primary/15 dark:text-primary-300 ring-1 ring-primary' :
                     'hover:bg-slate-100 dark:hover:bg-slate-700 text-ink dark:text-slate-300'
                   }`}
                   aria-label={`${date}${hasEntry ? ' - has diary entry' : ''}`}
                 >
-                  <span>{dayNum}</span>
+                  <span className="font-medium">{dayNum}</span>
                   {hasEntry && (
-                    <span className={`text-[8px] ${isSelected ? 'text-white' : ''}`}>
-                      <BookOpen className="w-2.5 h-2.5" />
+                    <span className={`text-[7px] sm:text-[8px] ${isSelected ? 'text-white' : ''}`}>
+                      <BookOpen className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
                     </span>
                   )}
                 </button>
               );
             })}
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center gap-2 text-xs text-ink-muted dark:text-slate-400">
-            <BookOpen className="w-3 h-3" /> = has diary entry
+          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center gap-2 text-[10px] sm:text-xs text-ink-muted dark:text-slate-400">
+            <BookOpen className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" /> = has entry
           </div>
         </div>
       </div>

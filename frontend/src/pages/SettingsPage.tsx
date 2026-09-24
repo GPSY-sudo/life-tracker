@@ -51,37 +51,37 @@ export function SettingsPage() {
     <div className="p-4 md:p-8 max-w-3xl mx-auto">
       <PageHeader title="Settings" subtitle="Customize your MiraiThread experience" />
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Account */}
-        <section className="card p-5">
+        <section className="card p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-4">
-            <UserIcon className="w-5 h-5 text-primary dark:text-primary-300" />
-            <h2 className="text-base font-semibold text-ink dark:text-slate-200">Account</h2>
+            <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-primary-300" />
+            <h2 className="text-sm sm:text-base font-semibold text-ink dark:text-slate-200">Account</h2>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {user ? (
               <>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2.5 sm:p-3 rounded-lg bg-slate-50 dark:bg-slate-800 gap-2">
                   <div>
-                    <p className="text-xs text-ink-muted dark:text-slate-400 uppercase tracking-wide">Name</p>
-                    <p className="text-sm font-medium text-ink dark:text-slate-200">{user.name}</p>
+                    <p className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-400 uppercase tracking-wide">Name</p>
+                    <p className="text-xs sm:text-sm font-medium text-ink dark:text-slate-200">{user.name}</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2.5 sm:p-3 rounded-lg bg-slate-50 dark:bg-slate-800 gap-2">
                   <div>
-                    <p className="text-xs text-ink-muted dark:text-slate-400 uppercase tracking-wide">Email</p>
-                    <p className="text-sm font-medium text-ink dark:text-slate-200">{user.email}</p>
+                    <p className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-400 uppercase tracking-wide">Email</p>
+                    <p className="text-xs sm:text-sm font-medium text-ink dark:text-slate-200 break-all">{user.email}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowChangePassword(!showChangePassword)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium text-sm"
+                  className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium text-xs sm:text-sm"
                 >
-                  <Lock className="w-4 h-4" />
+                  <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   {showChangePassword ? 'Hide' : 'Change Password'}
                 </button>
                 {showChangePassword && (
-                  <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <div className="p-3 sm:p-4 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                     <ChangePasswordForm />
                   </div>
                 )}
@@ -89,21 +89,21 @@ export function SettingsPage() {
                   onClick={() => {
                     logout();
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium text-sm"
+                  className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium text-xs sm:text-sm"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Logout
                 </button>
                 <button
                   onClick={() => setShowDeleteModal(true)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-danger/10 dark:bg-danger/20 text-danger hover:bg-danger/20 dark:hover:bg-danger/30 transition-colors font-medium text-sm"
+                  className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-danger/10 dark:bg-danger/20 text-danger hover:bg-danger/20 dark:hover:bg-danger/30 transition-colors font-medium text-xs sm:text-sm"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Delete Account
                 </button>
               </>
             ) : (
-              <p className="text-sm text-ink-muted dark:text-slate-400">Loading account information...</p>
+              <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400">Loading account information...</p>
             )}
           </div>
         </section>
@@ -111,12 +111,12 @@ export function SettingsPage() {
         <DeleteAccountModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} />
 
         {/* Appearance */}
-        <section className="card p-5">
+        <section className="card p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Sun className="w-5 h-5 text-primary dark:text-primary-300" />
-            <h2 className="text-base font-semibold text-ink dark:text-slate-200">Appearance</h2>
+            <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-primary-300" />
+            <h2 className="text-sm sm:text-base font-semibold text-ink dark:text-slate-200">Appearance</h2>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {([
               { mode: 'light' as ThemeMode, label: 'Light', icon: Sun },
               { mode: 'dark' as ThemeMode, label: 'Dark', icon: Moon },
@@ -128,14 +128,14 @@ export function SettingsPage() {
                   setTheme(mode);
                   toast(`Theme set to ${label}`, 'success');
                 }}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-colors ${
+                className={`flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl border-2 transition-colors ${
                   settings.theme === mode
                     ? 'border-primary bg-primary-50 dark:bg-primary/10'
                     : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                 }`}
               >
-                <Icon className={`w-6 h-6 ${settings.theme === mode ? 'text-primary dark:text-primary-300' : 'text-ink-muted dark:text-slate-400'}`} />
-                <span className={`text-sm font-medium ${settings.theme === mode ? 'text-primary dark:text-primary-300' : 'text-ink dark:text-slate-200'}`}>
+                <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${settings.theme === mode ? 'text-primary dark:text-primary-300' : 'text-ink-muted dark:text-slate-400'}`} />
+                <span className={`text-xs sm:text-sm font-medium ${settings.theme === mode ? 'text-primary dark:text-primary-300' : 'text-ink dark:text-slate-200'}`}>
                   {label}
                 </span>
               </button>
@@ -144,12 +144,12 @@ export function SettingsPage() {
         </section>
 
         {/* Focus Settings */}
-        <section className="card p-5">
+        <section className="card p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-5 h-5 text-primary dark:text-primary-300" />
-            <h2 className="text-base font-semibold text-ink dark:text-slate-200">Focus</h2>
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-primary-300" />
+            <h2 className="text-sm sm:text-base font-semibold text-ink dark:text-slate-200">Focus</h2>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <NumberSetting
               label="Focus duration (minutes)"
               value={pomodoroValues.focusDuration}
@@ -181,7 +181,7 @@ export function SettingsPage() {
             <button
               onClick={handleSavePomodoro}
               disabled={isSavingPomodoro}
-              className="w-full px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors font-medium text-sm disabled:opacity-50"
+              className="w-full px-3 sm:px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors font-medium text-xs sm:text-sm disabled:opacity-50"
             >
               {isSavingPomodoro ? 'Saving...' : 'Save Pomodoro Settings'}
             </button>
@@ -241,13 +241,13 @@ function NumberSetting({
   };
 
   return (
-    <div className="flex items-center justify-between">
-      <label className="text-sm text-ink dark:text-slate-200">{label}</label>
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-2 sm:gap-3">
+      <label className="text-xs sm:text-sm text-ink dark:text-slate-200">{label}</label>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => onChange(Math.max(min, value - 1))}
-            className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center font-semibold"
+            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center font-semibold text-sm"
             aria-label="Decrease"
             type="button"
           >
@@ -260,20 +260,20 @@ function NumberSetting({
             value={inputValue}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
-            className="w-12 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 text-center text-sm font-semibold border border-slate-200 dark:border-slate-600 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-16 h-10 sm:w-12 sm:h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 text-center text-xs sm:text-sm font-semibold border border-slate-200 dark:border-slate-600 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             style={{ MozAppearance: 'textfield' }}
             aria-label={`${label} input`}
           />
           <button
             onClick={() => onChange(Math.min(max, value + 1))}
-            className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center font-semibold"
+            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-ink dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center font-semibold text-sm"
             aria-label="Increase"
             type="button"
           >
             +
           </button>
         </div>
-        <span className="text-xs text-ink-muted dark:text-slate-500 whitespace-nowrap">
+        <span className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-500 whitespace-nowrap">
           Min {min} • Max {max}
         </span>
       </div>

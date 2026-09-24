@@ -418,7 +418,7 @@ function MixerContent({
         return (
           <div key={cat} className="mb-4">
             <span className="text-xs font-medium text-ink-muted dark:text-slate-400 mb-2 block">{categoryLabels[cat]}</span>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {sounds.map((sound) => {
                 const isEnabled = enabledSounds.has(sound.id);
                 const vol = volumes[sound.id] ?? 50;

@@ -157,23 +157,23 @@ export function TodayPage() {
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto">
       {/* Date Navigation */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
         <button
           onClick={goPrevDay}
-          className="btn-ghost px-3"
+          className="btn-ghost px-2 sm:px-3 min-w-[44px] min-h-[44px] flex items-center justify-center"
           aria-label="Previous day"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <div className="text-center">
-          <h1 className="text-xl md:text-2xl font-bold text-ink dark:text-slate-100">
+        <div className="text-center flex-1">
+          <h1 className="text-base sm:text-xl md:text-2xl font-bold text-ink dark:text-slate-100">
             {formatDate(selectedDate)}
           </h1>
-          <p className="text-sm text-ink-muted dark:text-slate-400">{getDayName(selectedDate)}</p>
+          <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400">{getDayName(selectedDate)}</p>
         </div>
         <button
           onClick={goNextDay}
-          className="btn-ghost px-3"
+          className="btn-ghost px-2 sm:px-3 min-w-[44px] min-h-[44px] flex items-center justify-center"
           aria-label="Next day"
         >
           <ChevronRight className="w-5 h-5" />
@@ -181,31 +181,32 @@ export function TodayPage() {
       </div>
 
       {!isToday && (
-        <div className="flex justify-center mb-4">
-          <button onClick={goToday} className="btn-secondary px-4 py-2 text-sm">
-            <CalendarDays className="w-4 h-4" />
-            Jump to Today
+        <div className="flex justify-center mb-3 sm:mb-4">
+          <button onClick={goToday} className="btn-secondary px-3 sm:px-4 py-2 text-xs sm:text-sm">
+            <CalendarDays className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Jump to Today</span>
+            <span className="sm:hidden">Today</span>
           </button>
         </div>
       )}
 
       {/* Activities Section */}
-      <section className="card p-5 mb-4">
-        <div className="flex items-center justify-between mb-4">
+      <section className="card p-4 sm:p-5 mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-primary dark:text-primary-300" />
-            <h2 className="text-base font-semibold text-ink dark:text-slate-200">Activities</h2>
+            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-primary-300" />
+            <h2 className="text-sm sm:text-base font-semibold text-ink dark:text-slate-200">Activities</h2>
           </div>
-          <span className="text-sm text-ink-muted dark:text-slate-400">
+          <span className="text-xs sm:text-sm text-ink-muted dark:text-slate-400">
             {activitySummary.completed} / {activitySummary.total} completed
           </span>
         </div>
         {isFuture ? (
-          <p className="text-sm text-ink-muted dark:text-slate-400 py-4 text-center">
+          <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400 py-4 text-center">
             No activity data for future dates.
           </p>
         ) : activities.length === 0 ? (
-          <p className="text-sm text-ink-muted dark:text-slate-400 py-4 text-center">
+          <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400 py-4 text-center">
             No activities yet.
           </p>
         ) : (
@@ -219,10 +220,10 @@ export function TodayPage() {
                   <button
                     key={activity.id}
                     onClick={() => handleCycleActivity(activity.id)}
-                    className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
+                    className="flex items-center gap-3 w-full p-2 sm:p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
                   >
                     <ActivityStatusIcon status={status} size="md" />
-                    <span className={`text-sm flex-1 ${status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
+                    <span className={`text-xs sm:text-sm flex-1 truncate ${status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
                       {activity.name}
                     </span>
                   </button>
@@ -235,18 +236,18 @@ export function TodayPage() {
       </section>
 
       {/* Tasks Section */}
-      <section className="card p-5 mb-4">
-        <div className="flex items-center justify-between mb-4">
+      <section className="card p-4 sm:p-5 mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <ListChecks className="w-5 h-5 text-primary dark:text-primary-300" />
-            <h2 className="text-base font-semibold text-ink dark:text-slate-200">Tasks</h2>
+            <ListChecks className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-primary-300" />
+            <h2 className="text-sm sm:text-base font-semibold text-ink dark:text-slate-200">Tasks</h2>
           </div>
-          <span className="text-sm text-ink-muted dark:text-slate-400">
+          <span className="text-xs sm:text-sm text-ink-muted dark:text-slate-400">
             {completedTasks} done, {pendingTasks} pending
           </span>
         </div>
         {dayTasks.length === 0 ? (
-          <p className="text-sm text-ink-muted dark:text-slate-400 py-4 text-center">
+          <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400 py-4 text-center">
             No tasks due on this day.
           </p>
         ) : (
@@ -254,11 +255,11 @@ export function TodayPage() {
             {dayTasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                className="flex items-center gap-3 p-2 sm:p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
               >
                 <button
                   onClick={() => handleToggleTask(task.id, task.status)}
-                  className="shrink-0"
+                  className="shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center -m-1.5 sm:m-0"
                   aria-label={task.status === 'completed' ? 'Reopen task' : 'Complete task'}
                 >
                   {task.status === 'completed' ? (
@@ -268,13 +269,13 @@ export function TodayPage() {
                   )}
                 </button>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${task.status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
+                  <p className={`text-xs sm:text-sm truncate ${task.status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
                     {task.title}
                   </p>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <PriorityBadge priority={task.priority} />
                     {task.dueTime && (
-                      <span className="text-xs text-ink-muted dark:text-slate-400">
+                      <span className="text-[10px] sm:text-xs text-ink-muted dark:text-slate-400">
                         at {task.dueTime}
                       </span>
                     )}
@@ -287,33 +288,34 @@ export function TodayPage() {
       </section>
 
       {/* Focus Section */}
-      <section className="card p-5 mb-4">
-        <div className="flex items-center justify-between mb-4">
+      <section className="card p-4 sm:p-5 mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary dark:text-primary-300" />
-            <h2 className="text-base font-semibold text-ink dark:text-slate-200">Focus</h2>
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-primary-300" />
+            <h2 className="text-sm sm:text-base font-semibold text-ink dark:text-slate-200">Focus</h2>
           </div>
           {isToday && (
             <button
               onClick={() => navigate('/focus')}
-              className="btn-secondary px-3 py-2 text-xs"
+              className="btn-secondary px-2.5 sm:px-3 py-2 text-xs sm:text-sm w-full sm:w-auto"
             >
-              <Play className="w-3 h-3" />
-              Start Focus
+              <Play className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Start Focus</span>
+              <span className="sm:hidden">Focus</span>
             </button>
           )}
         </div>
         {dayFocusSessions.length === 0 ? (
-          <p className="text-sm text-ink-muted dark:text-slate-400 py-4 text-center">
+          <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400 py-4 text-center">
             No focus sessions on this day.
           </p>
         ) : (
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <div>
-              <p className="text-2xl font-bold text-ink dark:text-slate-100">
+              <p className="text-lg sm:text-2xl font-bold text-ink dark:text-slate-100">
                 {dayFocusSessions.length} Pomodoros
               </p>
-              <p className="text-sm text-ink-muted dark:text-slate-400">
+              <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400">
                 {formatSessionDuration(focusMinutes)} focused
               </p>
             </div>
@@ -322,19 +324,19 @@ export function TodayPage() {
       </section>
 
       {/* Diary Section */}
-      <section className="card p-5 mb-4">
+      <section className="card p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-4">
-          <BookOpen className="w-5 h-5 text-primary dark:text-primary-300" />
-          <h2 className="text-base font-semibold text-ink dark:text-slate-200">Diary</h2>
+          <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-primary-300" />
+          <h2 className="text-sm sm:text-base font-semibold text-ink dark:text-slate-200">Diary</h2>
         </div>
         <textarea
-          className="input min-h-[120px] resize-y"
+          className="input min-h-[100px] sm:min-h-[120px] resize-y text-xs sm:text-sm"
           value={diaryText}
           onChange={(e) => setDiaryText(e.target.value)}
           placeholder="Write about your day..."
         />
         <div className="flex justify-end mt-3">
-          <button onClick={handleSaveDiary} className="btn-primary px-4 py-2 text-sm">
+          <button onClick={handleSaveDiary} className="btn-primary px-3 sm:px-4 py-2 text-xs sm:text-sm">
             Save Diary
           </button>
         </div>

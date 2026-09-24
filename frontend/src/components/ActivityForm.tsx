@@ -125,7 +125,7 @@ export function ActivityForm({ open, onClose, onSubmit, activity, year, month }:
             autoFocus
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label" htmlFor="activity-start">Start Date (optional)</label>
             <input
@@ -229,7 +229,7 @@ export function ActivityForm({ open, onClose, onSubmit, activity, year, month }:
               </div>
             ))}
             <div className="p-2 bg-slate-50 dark:bg-slate-900/30 rounded space-y-2">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <input
                   type="date"
                   className="input text-sm"

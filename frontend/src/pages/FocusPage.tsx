@@ -213,14 +213,14 @@ export function FocusPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Timer */}
-        <div className="flex flex-col items-center justify-center card p-8 min-h-[400px]">
+        <div className="flex flex-col items-center justify-center card p-4 sm:p-8 min-h-[350px] sm:min-h-[400px]">
           {/* Mode tabs */}
-          <div className="flex gap-1.5 mb-8 bg-slate-100 dark:bg-slate-700 rounded-xl p-1">
+          <div className="flex gap-1 sm:gap-1.5 mb-4 sm:mb-8 bg-slate-100 dark:bg-slate-700 rounded-xl p-1">
             {(['focus', 'shortBreak', 'longBreak'] as PomodoroMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => pomodoro.switchMode(m)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   pomodoro.mode === m
                     ? 'bg-surface-card dark:bg-surface-dark-card text-primary dark:text-primary-300 shadow-sm'
                     : 'text-ink-muted dark:text-slate-400'
@@ -232,8 +232,8 @@ export function FocusPage() {
           </div>
 
           {/* Timer display */}
-          <div className="relative flex items-center justify-center mb-6">
-            <svg className="absolute inset-0 -rotate-90" width="240" height="240" viewBox="0 0 240 240">
+          <div className="relative flex items-center justify-center mb-4 sm:mb-6 w-full max-w-xs sm:max-w-sm">
+            <svg className="absolute inset-0 -rotate-90 w-full h-full" viewBox="0 0 240 240" preserveAspectRatio="xMidYMid meet">
               <circle cx="120" cy="120" r="110" fill="none" stroke="currentColor" strokeWidth="6" className="text-slate-200 dark:text-slate-700" />
               <circle
                 cx="120" cy="120" r="110"
@@ -247,12 +247,12 @@ export function FocusPage() {
                 style={{ transition: 'stroke-dashoffset 0.3s ease' }}
               />
             </svg>
-            <div className="flex flex-col items-center justify-center w-[240px] h-[240px]">
+            <div className="flex flex-col items-center justify-center aspect-square w-full">
               <span className="text-xs font-medium text-ink-muted dark:text-slate-400 mb-1">
                 {modeLabel[pomodoro.mode]}
               </span>
               <span
-                className={`text-5xl md:text-6xl font-bold font-mono ${modeColors[pomodoro.mode]}`}
+                className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-mono ${modeColors[pomodoro.mode]}`}
                 aria-live="polite"
                 aria-label={`${Math.floor(pomodoro.timeRemaining / 60)} minutes ${pomodoro.timeRemaining % 60} seconds remaining`}
               >
@@ -265,25 +265,25 @@ export function FocusPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
             {pomodoro.isRunning ? (
-              <button onClick={pomodoro.pause} className="btn-primary px-8 py-3">
-                <Pause className="w-5 h-5" /> Pause
+              <button onClick={pomodoro.pause} className="btn-primary px-4 sm:px-8 py-2.5 sm:py-3 text-sm">
+                <Pause className="w-4 sm:w-5 h-4 sm:h-5" /> <span className="hidden sm:inline">Pause</span>
               </button>
             ) : pomodoro.isPaused ? (
-              <button onClick={pomodoro.start} className="btn-primary px-8 py-3">
-                <Play className="w-5 h-5" /> Resume
+              <button onClick={pomodoro.start} className="btn-primary px-4 sm:px-8 py-2.5 sm:py-3 text-sm">
+                <Play className="w-4 sm:w-5 h-4 sm:h-5" /> <span className="hidden sm:inline">Resume</span>
               </button>
             ) : (
-              <button onClick={pomodoro.start} className="btn-primary px-8 py-3">
-                <Play className="w-5 h-5" /> Start
+              <button onClick={pomodoro.start} className="btn-primary px-4 sm:px-8 py-2.5 sm:py-3 text-sm">
+                <Play className="w-4 sm:w-5 h-4 sm:h-5" /> <span className="hidden sm:inline">Start</span>
               </button>
             )}
-            <button onClick={pomodoro.reset} className="btn-ghost px-4 py-3" aria-label="Reset timer">
-              <RotateCcw className="w-5 h-5" />
+            <button onClick={pomodoro.reset} className="btn-ghost px-2.5 sm:px-4 py-2.5 sm:py-3 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Reset timer">
+              <RotateCcw className="w-4 sm:w-5 h-4 sm:h-5" />
             </button>
-            <button onClick={pomodoro.skip} className="btn-ghost px-4 py-3" aria-label="Skip to next">
-              <SkipForward className="w-5 h-5" />
+            <button onClick={pomodoro.skip} className="btn-ghost px-2.5 sm:px-4 py-2.5 sm:py-3 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Skip to next">
+              <SkipForward className="w-4 sm:w-5 h-4 sm:h-5" />
             </button>
           </div>
         </div>
@@ -423,14 +423,14 @@ export function FocusPage() {
               <Clock className="w-5 h-5 text-primary dark:text-primary-300" />
               <h3 className="text-base font-semibold text-ink dark:text-slate-200">Today's Focus</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
               <div>
-                <p className="text-2xl font-bold text-ink dark:text-slate-100">{todaySessions.length}</p>
-                <p className="text-xs text-ink-muted dark:text-slate-400">Pomodoros</p>
+                <p className="text-xl sm:text-2xl font-bold text-ink dark:text-slate-100">{todaySessions.length}</p>
+                <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400">Pomodoros</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-ink dark:text-slate-100">{formatSessionDuration(todayMinutes)}</p>
-                <p className="text-xs text-ink-muted dark:text-slate-400">Focused</p>
+                <p className="text-xl sm:text-2xl font-bold text-ink dark:text-slate-100">{formatSessionDuration(todayMinutes)}</p>
+                <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400">Focused</p>
               </div>
             </div>
 
