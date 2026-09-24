@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Target,
@@ -17,6 +18,22 @@ import { LandingFooter } from '../components/layout/LandingFooter';
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // Check if dark class exists on html element
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+
+    checkDarkMode();
+
+    // Listen for changes to the dark class
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-950 dark:via-blue-950 dark:to-slate-900">
@@ -31,7 +48,7 @@ export function LandingPage() {
             {/* MiraiThread Logo */}
             <div className="w-full max-w-sm mx-auto lg:mx-0">
               <img 
-                src="/miraithread-logo-dark.png" 
+                src={isDark ? "/miraithread-logo-dark.png" : "/miraithread-logo-light.png"} 
                 alt="MiraiThread" 
                 className="w-full h-auto max-w-xs lg:max-w-sm"
               />
@@ -73,7 +90,7 @@ export function LandingPage() {
 
           {/* RIGHT: Connected Thread Card */}
           <div className="flex items-center justify-center mt-6 lg:mt-0">
-            <div className="card p-6 md:p-8 bg-slate-800/40 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 dark:border-slate-700/50 w-full max-w-md">
+            <div className="card p-6 md:p-8 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 w-full max-w-md shadow-sm dark:shadow-lg">
               {/* Thread Diagram */}
               <div className="mb-6 flex justify-center overflow-hidden">
                 <svg className="w-full h-12 md:h-12 max-w-xs" viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
@@ -97,45 +114,45 @@ export function LandingPage() {
               </div>
               
               {/* Title */}
-              <h3 className="text-center text-xs md:text-sm text-slate-400 mb-4 md:mb-6 font-medium tracking-wide">
+              <h3 className="text-center text-xs md:text-sm text-slate-600 dark:text-slate-400 mb-4 md:mb-6 font-medium tracking-wide">
                 Your connected thread
               </h3>
               
               {/* Content Items */}
               <div className="space-y-2 md:space-y-3">
                 {/* Tasks */}
-                <div className="flex items-start gap-3 p-2 md:p-3 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors">
+                <div className="flex items-start gap-3 p-2 md:p-3 rounded-lg bg-slate-100 dark:bg-slate-700/40 hover:bg-slate-200 dark:hover:bg-slate-700/60 transition-colors">
                   <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs md:text-sm font-semibold text-white">Tasks</div>
-                    <div className="text-xs text-slate-400">Turn intentions into action</div>
+                    <div className="text-xs md:text-sm font-semibold text-slate-900 dark:text-white">Tasks</div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">Turn intentions into action</div>
                   </div>
                 </div>
                 
                 {/* Activities */}
-                <div className="flex items-start gap-3 p-2 md:p-3 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors">
+                <div className="flex items-start gap-3 p-2 md:p-3 rounded-lg bg-slate-100 dark:bg-slate-700/40 hover:bg-slate-200 dark:hover:bg-slate-700/60 transition-colors">
                   <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs md:text-sm font-semibold text-white">Activities</div>
-                    <div className="text-xs text-slate-400">Track what you actually did</div>
+                    <div className="text-xs md:text-sm font-semibold text-slate-900 dark:text-white">Activities</div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">Track what you actually did</div>
                   </div>
                 </div>
                 
                 {/* Focus */}
-                <div className="flex items-start gap-3 p-2 md:p-3 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors">
+                <div className="flex items-start gap-3 p-2 md:p-3 rounded-lg bg-slate-100 dark:bg-slate-700/40 hover:bg-slate-200 dark:hover:bg-slate-700/60 transition-colors">
                   <div className="w-2 h-2 rounded-full bg-cyan-400 mt-1.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs md:text-sm font-semibold text-white">Focus</div>
-                    <div className="text-xs text-slate-400">Protect your attention</div>
+                    <div className="text-xs md:text-sm font-semibold text-slate-900 dark:text-white">Focus</div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">Protect your attention</div>
                   </div>
                 </div>
                 
                 {/* Diary & Mood */}
-                <div className="flex items-start gap-3 p-2 md:p-3 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors">
+                <div className="flex items-start gap-3 p-2 md:p-3 rounded-lg bg-slate-100 dark:bg-slate-700/40 hover:bg-slate-200 dark:hover:bg-slate-700/60 transition-colors">
                   <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs md:text-sm font-semibold text-white">Diary & Mood</div>
-                    <div className="text-xs text-slate-400">Reflect on your day</div>
+                    <div className="text-xs md:text-sm font-semibold text-slate-900 dark:text-white">Diary & Mood</div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">Reflect on your day</div>
                   </div>
                 </div>
               </div>
