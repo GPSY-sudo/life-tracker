@@ -9,8 +9,10 @@ import {
   X,
   Minus,
   CircleDashed,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
-import { useActivities, useAllDailyRecords, loadActivitiesFromAPI, loadDailyRecordsForRange, syncActivityToState, updateActivityStatusAndSync } from '@/hooks/useAppData';
+import { useActivities, useAllDailyRecords, useSettings, loadActivitiesFromAPI, loadDailyRecordsForRange, syncActivityToState, updateActivityStatusAndSync, reorderActivity, applyActivityOrder } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/useToast';
 import { activityService } from '@/services/activityService';
 import { ActivityForm } from '@/components/ActivityForm';
@@ -33,6 +35,7 @@ export function ActivityTrackerPage() {
   const toast = useToast();
   const activities = useActivities();
   const dailyRecords = useAllDailyRecords();
+  const settings = useSettings();
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -44,6 +47,10 @@ export function ActivityTrackerPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Drag-and-drop state
+  const [draggedActivityId, setDraggedActivityId] = useState<string | null>(null);
+  const [dragOverActivityId, setDragOverActivityId] = useState<string | null>(null);
 
   const todayStr = todayISO();
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
@@ -147,7 +154,7 @@ export function ActivityTrackerPage() {
     });
   }, [activities, year, month, daysInMonth]);
 
-  // Dynamically sort visible activities based on today's date
+  // Dynamically sort visible activities based on today's date and custom order
   const sortedActivities = useMemo(() => {
     const today = todayISO();
 
@@ -177,8 +184,9 @@ export function ActivityTrackerPage() {
       return visibleActivities.indexOf(a) - visibleActivities.indexOf(b);
     });
 
-    return sorted;
-  }, [visibleActivities]);
+    // Apply custom activity order within each lifecycle group
+    return applyActivityOrder(sorted);
+  }, [visibleActivities, settings]);
 
   // Calculate per-activity stats for the month
   const activityStats = useMemo(() => {
@@ -271,6 +279,60 @@ export function ActivityTrackerPage() {
       toast('Failed to delete activity', 'error');
       console.error(err);
     }
+  };
+
+  // Drag-and-drop handlers
+  const handleDragStart = (activityId: string) => {
+    setDraggedActivityId(activityId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedActivityId(null);
+    setDragOverActivityId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLElement>, targetActivityId: string) => {
+    e.preventDefault();
+    setDragOverActivityId(targetActivityId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverActivityId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLElement>, targetActivityId: string) => {
+    e.preventDefault();
+    if (!draggedActivityId || draggedActivityId === targetActivityId) {
+      setDraggedActivityId(null);
+      setDragOverActivityId(null);
+      return;
+    }
+
+    // Find the direction to move
+    const draggedIndex = sortedActivities.findIndex((a) => a.id === draggedActivityId);
+    const targetIndex = sortedActivities.findIndex((a) => a.id === targetActivityId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedActivityId(null);
+      setDragOverActivityId(null);
+      return;
+    }
+
+    // Determine direction and move
+    if (draggedIndex < targetIndex) {
+      // Moving down: need to call reorderActivity multiple times
+      for (let i = draggedIndex; i < targetIndex; i++) {
+        reorderActivity(draggedActivityId, 'down');
+      }
+    } else if (draggedIndex > targetIndex) {
+      // Moving up: need to call reorderActivity multiple times
+      for (let i = draggedIndex; i > targetIndex; i--) {
+        reorderActivity(draggedActivityId, 'up');
+      }
+    }
+
+    setDraggedActivityId(null);
+    setDragOverActivityId(null);
   };
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -460,11 +522,52 @@ export function ActivityTrackerPage() {
               <tbody>
                 {sortedActivities.map((activity) => {
                   const stats = activityStats.find((s) => s.activity.id === activity.id);
+                  const isDragged = draggedActivityId === activity.id;
+                  const isDragOver = dragOverActivityId === activity.id;
                   return (
-                    <tr key={activity.id} className="border-t border-slate-100 dark:border-slate-700/50">
+                    <tr
+                      key={activity.id}
+                      draggable
+                      onDragStart={() => handleDragStart(activity.id)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => handleDragOver(e, activity.id)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, activity.id)}
+                      className={`border-t border-slate-100 dark:border-slate-700/50 transition-all ${
+                        isDragged ? 'opacity-50 bg-primary-50 dark:bg-primary/5' : ''
+                      } ${isDragOver ? 'bg-primary-50 dark:bg-primary/10 border-l-4 border-l-primary' : ''} ${
+                        !isDragged && !isDragOver ? 'cursor-move hover:bg-slate-50 dark:hover:bg-slate-800/30' : ''
+                      } ${isDragged ? 'cursor-grabbing' : ''}`}
+                    >
                       <td className="py-2 pr-3 sticky left-0 bg-surface-card dark:bg-surface-dark-card">
-                        <div className="flex items-center gap-2">
-                          <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center justify-between gap-3 w-full">
+                          {/* Left: Up/Down buttons */}
+                          <div className="flex gap-0.5">
+                            <button
+                              onClick={() => reorderActivity(activity.id, 'up')}
+                              disabled={sortedActivities[0]?.id === activity.id}
+                              className="text-ink-light hover:text-primary dark:text-slate-500 dark:hover:text-primary-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                              aria-label={`Move ${activity.name} up`}
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => reorderActivity(activity.id, 'down')}
+                              disabled={sortedActivities[sortedActivities.length - 1]?.id === activity.id}
+                              className="text-ink-light hover:text-primary dark:text-slate-500 dark:hover:text-primary-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                              aria-label={`Move ${activity.name} down`}
+                            >
+                              <ArrowDown className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {/* Center: Activity name */}
+                          <span className="text-sm font-medium text-ink dark:text-slate-200 flex-1 text-center">
+                            {activity.name}
+                          </span>
+
+                          {/* Right: Edit/Delete buttons */}
+                          <div className="flex gap-0.5">
                             <button
                               onClick={() => {
                                 setEditingActivity(activity);
@@ -483,9 +586,6 @@ export function ActivityTrackerPage() {
                               <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
-                          <span className="text-sm font-medium text-ink dark:text-slate-200 whitespace-nowrap">
-                            {activity.name}
-                          </span>
                         </div>
                       </td>
                       {monthDates.map((date) => {
@@ -540,13 +640,49 @@ export function ActivityTrackerPage() {
           <div className="md:hidden space-y-4">
             {sortedActivities.map((activity) => {
               const stats = activityStats.find((s) => s.activity.id === activity.id);
+              const isDragged = draggedActivityId === activity.id;
+              const isDragOver = dragOverActivityId === activity.id;
               return (
-                <div key={activity.id} className="card p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-ink dark:text-slate-200">
-                        {activity.name}
-                      </span>
+                <div
+                  key={activity.id}
+                  draggable
+                  onDragStart={() => handleDragStart(activity.id)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, activity.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, activity.id)}
+                  className={`card p-4 transition-all ${isDragged ? 'opacity-50 bg-primary-50 dark:bg-primary/5' : ''} ${
+                    isDragOver ? 'bg-primary-50 dark:bg-primary/10 border-l-4 border-l-primary' : ''
+                  } ${!isDragged && !isDragOver ? 'cursor-move active:cursor-grabbing' : ''} ${isDragged ? 'cursor-grabbing' : ''}`}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    {/* Left: Up/Down buttons */}
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => reorderActivity(activity.id, 'up')}
+                        disabled={sortedActivities[0]?.id === activity.id}
+                        className="text-ink-light hover:text-primary dark:text-slate-500 dark:hover:text-primary-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label={`Move ${activity.name} up`}
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => reorderActivity(activity.id, 'down')}
+                        disabled={sortedActivities[sortedActivities.length - 1]?.id === activity.id}
+                        className="text-ink-light hover:text-primary dark:text-slate-500 dark:hover:text-primary-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label={`Move ${activity.name} down`}
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Center: Activity name */}
+                    <span className="text-sm font-semibold text-ink dark:text-slate-200 flex-1 text-center">
+                      {activity.name}
+                    </span>
+
+                    {/* Right: Edit/Delete buttons */}
+                    <div className="flex gap-1">
                       <button
                         onClick={() => {
                           setEditingActivity(activity);
@@ -565,6 +701,8 @@ export function ActivityTrackerPage() {
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
+
+                    {/* Stats on far right */}
                     {stats && (
                       <span className={`text-sm font-semibold ${stats.pct >= 80 ? 'text-success-text dark:text-green-400' : 'text-primary dark:text-primary-300'}`}>
                         {stats.pct}%

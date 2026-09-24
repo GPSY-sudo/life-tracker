@@ -460,6 +460,7 @@ export const defaultSettings: AppSettings = {
     soundVolumes: {},
     selectedPreset: 'preset-rainy-focus',
   },
+  activityOrder: [],
 };
 
 // ============================================================

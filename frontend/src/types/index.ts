@@ -250,4 +250,5 @@ export interface AppSettings {
   theme: ThemeMode;
   pomodoro: PomodoroSettings;
   sounds: SoundPreferences;
+  activityOrder: string[];
 }

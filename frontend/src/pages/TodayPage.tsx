@@ -11,8 +11,10 @@ import {
   Play,
   CheckCircle2,
   Circle,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
-import { useActivities, useTasks, useFocusSessions, useDailyRecord, loadActivitiesFromAPI, loadTasksFromAPI, loadFocusSessionsFromAPI, updateActivityStatusAndSync, syncTaskToState } from '@/hooks/useAppData';
+import { useActivities, useTasks, useFocusSessions, useDailyRecord, loadActivitiesFromAPI, loadTasksFromAPI, loadFocusSessionsFromAPI, updateActivityStatusAndSync, syncTaskToState, reorderActivity, applyActivityOrder } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/useToast';
 import { dailyService } from '@/services/dailyService';
 import { taskService } from '@/services/taskService';
@@ -212,21 +214,45 @@ export function TodayPage() {
         ) : (
           <>
             <div className="space-y-1 mb-4">
-              {activities.map((activity) => {
+              {applyActivityOrder(activities).map((activity, index) => {
                 const status = dayRecord?.activities[activity.id];
                 const isActive = isDateApplicable(selectedDate, activity);
                 if (!isActive) return null;
+                
+                const applicableActivities = applyActivityOrder(activities).filter((a) => isDateApplicable(selectedDate, a));
+                const isFirst = index === 0 || applicableActivities[0]?.id === activity.id;
+                const isLast = index === applicableActivities.length - 1;
+                
                 return (
-                  <button
-                    key={activity.id}
-                    onClick={() => handleCycleActivity(activity.id)}
-                    className="flex items-center gap-3 w-full p-2 sm:p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
-                  >
-                    <ActivityStatusIcon status={status} size="md" />
-                    <span className={`text-xs sm:text-sm flex-1 truncate ${status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
-                      {activity.name}
-                    </span>
-                  </button>
+                  <div key={activity.id} className="flex items-center gap-2 group">
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                      <button
+                        onClick={() => reorderActivity(activity.id, 'up')}
+                        disabled={isFirst}
+                        className="p-1.5 text-ink-light hover:text-primary dark:text-slate-500 dark:hover:text-primary-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label={`Move ${activity.name} up`}
+                      >
+                        <ArrowUp className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => reorderActivity(activity.id, 'down')}
+                        disabled={isLast}
+                        className="p-1.5 text-ink-light hover:text-primary dark:text-slate-500 dark:hover:text-primary-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label={`Move ${activity.name} down`}
+                      >
+                        <ArrowDown className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => handleCycleActivity(activity.id)}
+                      className="flex items-center gap-3 w-full p-2 sm:p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
+                    >
+                      <ActivityStatusIcon status={status} size="md" />
+                      <span className={`text-xs sm:text-sm flex-1 truncate ${status === 'completed' ? 'text-ink-muted dark:text-slate-500 line-through' : 'text-ink dark:text-slate-200'}`}>
+                        {activity.name}
+                      </span>
+                    </button>
+                  </div>
                 );
               })}
             </div>

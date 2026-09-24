@@ -9,6 +9,7 @@ const appPreferenceSchema = new mongoose.Schema({
     longBreakDuration: { type: Number, default: 15 },
     sessionsBeforeLongBreak: { type: Number, default: 4 },
   },
+  activityOrder: { type: [String], default: [] },
 }, {
   timestamps: true,
   toJSON: {

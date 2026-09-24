@@ -17,11 +17,11 @@ export const getAppPreferences = async (req, res, next) => {
   }
 };
 
-// @desc    Update app preferences (theme and Pomodoro settings)
+// @desc    Update app preferences (theme, Pomodoro settings, and activity order)
 // @route   PUT /api/preferences/app
 export const updateAppPreferences = async (req, res, next) => {
   try {
-    const { theme, pomodoro } = req.body;
+    const { theme, pomodoro, activityOrder } = req.body;
 
     let prefs = await AppPreference.findOne({ userId: req.user._id });
 
@@ -66,6 +66,13 @@ export const updateAppPreferences = async (req, res, next) => {
         }
         prefs.pomodoro.sessionsBeforeLongBreak = sessionsBeforeLongBreak;
       }
+    }
+
+    if (activityOrder !== undefined) {
+      if (!Array.isArray(activityOrder)) {
+        return res.status(400).json({ error: 'Activity order must be an array of activity IDs' });
+      }
+      prefs.activityOrder = activityOrder;
     }
 
     const updatedPrefs = await prefs.save();

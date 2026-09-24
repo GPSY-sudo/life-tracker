@@ -143,10 +143,20 @@ export async function updateDiaryNoteAndSync(date: string, note: string, mood?: 
  * Syncs a single activity into local state and store.
  * Used after create/update/delete operations.
  * Always creates new array references for immutability.
+ * When deleting, also removes from activity order.
  */
 export function syncActivityToState(activity: Activity | null, deleteId?: string): void {
   if (deleteId) {
     apiActivities = apiActivities.filter((a) => a.id !== deleteId);
+    // Also remove from activity order if present
+    const newOrder = store.settings.activityOrder.filter((id) => id !== deleteId);
+    if (newOrder.length !== store.settings.activityOrder.length) {
+      store.setSettings({ ...store.settings, activityOrder: newOrder });
+      // Persist updated order to backend
+      appPreferenceService.updateAppPreferences({ activityOrder: newOrder }).catch((error) => {
+        console.error('Failed to persist activity order after deletion:', error);
+      });
+    }
   } else if (activity) {
     const idx = apiActivities.findIndex((a) => a.id === activity.id);
     if (idx >= 0) {
@@ -335,7 +345,7 @@ export function useSoundPresets(): SoundPreset[] {
 }
 
 /**
- * Load app preferences (theme and Pomodoro settings) from the API and sync to store.
+ * Load app preferences (theme, Pomodoro settings, and activity order) from the API and sync to store.
  */
 export async function loadAppPreferencesFromAPI(): Promise<void> {
   try {
@@ -344,6 +354,7 @@ export async function loadAppPreferencesFromAPI(): Promise<void> {
       ...store.settings,
       theme: preferences.theme,
       pomodoro: preferences.pomodoro,
+      activityOrder: preferences.activityOrder || [],
     });
   } catch (error) {
     console.error('Failed to load app preferences:', error);
@@ -424,4 +435,91 @@ export function updateSoundPreferences(data: Partial<AppSettings['sounds']>) {
   soundService.savePreferences(updated).catch((error) => {
     console.error('Failed to persist sound preferences:', error);
   });
+}
+
+/**
+ * Reorder activities by moving one up or down.
+ * Updates local state immediately, then persists to backend.
+ * Handles edge cases: invalid indices, activities not in order, deleted activities.
+ */
+export function reorderActivity(activityId: string, direction: 'up' | 'down'): void {
+  let newOrder = [...store.settings.activityOrder];
+  
+  // Get all activity IDs currently in the system
+  const allActivityIds = new Set(apiActivities.map((a) => a.id));
+  
+  // Remove any stale IDs (activities that no longer exist)
+  newOrder = newOrder.filter((id) => allActivityIds.has(id));
+  
+  // Add any new activities not in the order (append to end)
+  for (const activity of apiActivities) {
+    if (!newOrder.includes(activity.id)) {
+      newOrder.push(activity.id);
+    }
+  }
+  
+  const currentIndex = newOrder.indexOf(activityId);
+  if (currentIndex === -1) {
+    console.warn(`Activity ${activityId} not found in order list`);
+    return;
+  }
+  
+  // Check bounds
+  if (direction === 'up' && currentIndex === 0) {
+    return; // Already at top
+  }
+  if (direction === 'down' && currentIndex === newOrder.length - 1) {
+    return; // Already at bottom
+  }
+  
+  // Perform swap
+  const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+  [newOrder[currentIndex], newOrder[swapIndex]] = [newOrder[swapIndex], newOrder[currentIndex]];
+  
+  // Update local state immediately (optimistic)
+  store.setSettings({ ...store.settings, activityOrder: newOrder });
+  
+  // Persist to backend without blocking
+  appPreferenceService.updateAppPreferences({ activityOrder: newOrder }).catch((error) => {
+    console.error('Failed to persist activity order:', error);
+    // Revert local state on error
+    store.setSettings({ ...store.settings, activityOrder: store.settings.activityOrder });
+  });
+}
+
+/**
+ * Apply activity order to a list of activities.
+ * If no custom order exists, returns activities in their current order.
+ * Handles missing/stale activity IDs gracefully.
+ */
+export function applyActivityOrder(activities: Activity[]): Activity[] {
+  const order = store.settings.activityOrder;
+  
+  // If no custom order, return as-is
+  if (!order || order.length === 0) {
+    return activities;
+  }
+  
+  // Create a map for O(1) lookup
+  const orderMap = new Map(order.map((id, idx) => [id, idx]));
+  
+  // Sort activities according to custom order, then by original order for unordered items
+  const sorted = [...activities].sort((a, b) => {
+    const indexA = orderMap.get(a.id) ?? Infinity;
+    const indexB = orderMap.get(b.id) ?? Infinity;
+    
+    // Both in order
+    if (indexA !== Infinity && indexB !== Infinity) {
+      return indexA - indexB;
+    }
+    
+    // One in order, one not
+    if (indexA !== Infinity) return -1;
+    if (indexB !== Infinity) return 1;
+    
+    // Neither in order - preserve original order
+    return activities.indexOf(a) - activities.indexOf(b);
+  });
+  
+  return sorted;
 }

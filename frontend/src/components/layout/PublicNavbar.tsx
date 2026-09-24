@@ -79,7 +79,7 @@ export function PublicNavbar() {
               }}
               className="btn-primary px-4 md:px-8 py-2 md:py-3 text-sm md:text-base font-semibold whitespace-nowrap"
             >
-              Start
+              Start Your Journey
             </button>
           </div>
 
